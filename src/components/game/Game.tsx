@@ -44,7 +44,7 @@ function Footer() {
   return <p className="mt-auto pt-6 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">PopTART-Cats • NASA Space Apps Challenge • Concepto: Maggie</p>;
 }
 
-function ResourceBar({ k, value, delta }: { k: ResourceKey; value: number; delta?: number }) {
+function ResourceBar({ k, value, delta }: { k: ResourceKey; value: number; delta?: number | undefined }) {
   const Icon = ICON[k];
   return (
     <div className="glass flex flex-1 items-center gap-3 rounded-full px-4 py-2">
@@ -76,7 +76,7 @@ function Hud({ r, before }: { r: Resources; before?: Resources }) {
 
 function Effects({ c }: { c: Choice }) {
   const keys = Object.keys(c.effects) as ResourceKey[];
-  const entries = keys.length === 1 && c.effects[keys[0]]! < 0 ? keys : keys;
+  const entries = keys;
   return (
     <div className="flex flex-wrap gap-2">
       {entries.map((k) => {
