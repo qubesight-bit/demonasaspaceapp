@@ -1,23 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Game } from "@/components/game/Game";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "¡Misión Base Lunar! — Aventura lunar interactiva" },
+      { name: "description", content: "Toma decisiones como comandante de la Base Lunar Alfa y equilibra energía, comida y seguridad. PopTART-Cats, NASA Space Apps 2026." },
+      { property: "og:title", content: "¡Misión Base Lunar!" },
+      { property: "og:description", content: "Aventura lunar interactiva: equilibra energía, comida y seguridad en la Base Lunar Alfa." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: Game,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}

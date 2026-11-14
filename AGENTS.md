@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Game rules (missions, choice effects, defeat threshold) live in src/lib/game.ts and are tested in src/test/game.test.ts; screens in src/components/game only render state — keeps rules testable without UI.
