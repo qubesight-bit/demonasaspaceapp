@@ -176,8 +176,8 @@ function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: s
 }
 
 function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
-  const m = MISSIONS[index];
-  const art = ART[index];
+  const m = MISSIONS[index]!;
+  const art = ART[index]!;
   return (
     <Screen bg={art.bg}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -216,7 +216,7 @@ function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; on
 }
 
 function Report({ index, choice, before, r, onNext }: { index: number; choice: Choice; before: Resources; r: Resources; onNext: () => void }) {
-  const m = MISSIONS[index];
+  const m = MISSIONS[index]!;
   const fx = Object.entries(choice.effects) as [ResourceKey, number][];
   const gains = fx.filter(([, v]) => v > 0);
   const losses = fx.filter(([, v]) => v < 0);
