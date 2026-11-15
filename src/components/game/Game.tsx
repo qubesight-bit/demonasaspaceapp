@@ -97,6 +97,18 @@ function Effects({ c }: { c: Choice }) {
   );
 }
 
+function CostaRicaFlag() {
+  return (
+    <svg className="costa-rica-flag" viewBox="0 0 30 20" role="img" aria-label="Bandera de Costa Rica">
+      <rect width="30" height="3" y="0" fill="#002b7f" />
+      <rect width="30" height="3" y="3" fill="#ffffff" />
+      <rect width="30" height="8" y="6" fill="#ce1126" />
+      <rect width="30" height="3" y="14" fill="#ffffff" />
+      <rect width="30" height="3" y="17" fill="#002b7f" />
+    </svg>
+  );
+}
+
 function Menu({ onStart }: { onStart: () => void }) {
   const [panel, setPanel] = useState<null | "guide" | "science" | "credits">(null);
   return (
@@ -109,10 +121,15 @@ function Menu({ onStart }: { onStart: () => void }) {
             <p className="text-sm font-bold">Equipo PopTART-Cats</p>
           </div>
         </div>
+        <div className="costa-rica-badge glass" aria-label="Proyecto creado en Costa Rica">
+          <CostaRicaFlag />
+          <span>Costa Rica</span>
+        </div>
       </header>
       <section className="my-auto flex min-w-0 flex-col items-center py-4 text-center animate-rise">
         <span className="glass rounded-full px-5 py-1.5 text-sm font-bold">¡Una aventura en la Luna!</span>
         <h1 className="text-glow mt-4 text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">¡MISIÓN BASE LUNAR!</h1>
+        <p className="costa-rica-welcome">¡Pura vida, astronauta! Desde Costa Rica, comienza tu aventura lunar.</p>
         <p className="glass mt-4 rounded-2xl px-5 py-2 font-bold sm:text-lg">¡Cuida la energía, la comida y la seguridad de tu base!</p>
         <div className="mt-6 flex w-full min-w-0 flex-col items-center gap-6 md:flex-row md:justify-center">
           <div className="flex w-full max-w-64 shrink-0 flex-col items-center gap-4 sm:max-w-72">
@@ -133,7 +150,7 @@ function Menu({ onStart }: { onStart: () => void }) {
       </section>
       <footer className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold">
         <span className="glass rounded-2xl px-4 py-2">🎨 Arte e idea: Maggie • 💻 Código: Ernesto • 🔬 Ciencia: Emmanuel</span>
-        <span className="text-muted-foreground">Versión 2.0 • PopTART-Cats</span>
+        <span className="text-muted-foreground">Hecho en Costa Rica por PopTART-Cats • Versión 2.0</span>
       </footer>
       {panel && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-scrim p-4" onClick={() => setPanel(null)}>

@@ -143,9 +143,17 @@
 .lunar-game { overflow-wrap: anywhere; line-height: 1.6; }
 .lunar-game button { min-height: 48px; touch-action: manipulation; }
 .lunar-game button:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
+.costa-rica-badge { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: .45rem .7rem; border-radius: 9999px; font-weight: 800; white-space: nowrap; }
+.costa-rica-flag { display: block; width: 2.25rem; height: 1.5rem; overflow: hidden; border: 1px solid oklch(1 0 0 / .75); border-radius: .2rem; box-shadow: 0 1px 3px oklch(.1 .05 260 / .45); }
+.costa-rica-welcome { max-width: 38rem; margin-top: .65rem; padding: .35rem .9rem; border-radius: 9999px; background: oklch(.18 .07 235 / .72); color: #f4fbff; font-weight: 800; box-shadow: inset 0 1px 0 oklch(1 0 0 / .3); }
 .resource-hud { min-width: 0; }
 .resource-bar { min-height: 0; }
 .resource-bar .mt-1 { margin-top: .15rem; }
+@media (max-width: 420px) {
+  .costa-rica-badge { padding: .35rem .45rem; font-size: .8125rem; }
+  .costa-rica-flag { width: 1.95rem; height: 1.3rem; }
+  .costa-rica-welcome { border-radius: 1rem; }
+}
 
 .solar-header {
   background: linear-gradient(180deg, #ffffff35, #103464cf);
