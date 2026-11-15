@@ -218,7 +218,7 @@ function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; on
 function SolarMission({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
   const m = MISSIONS[index]!;
   return (
-    <Screen bg={solarStormBg}>
+    <main className="lunar-game solar-scene">
       <header className="solar-header flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-extrabold text-energy">{m.code} • Misión {index + 1} de {MISSIONS.length}</p>
@@ -226,25 +226,28 @@ function SolarMission({ index, r, onChoose }: { index: number; r: Resources; onC
         </div>
         <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
       </header>
-      <section className="solar-panel animate-rise my-auto mx-auto w-full max-w-3xl rounded-3xl p-4 text-center sm:p-8" aria-labelledby="solar-title">
-        <p className="solar-alert inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold sm:text-base"><TriangleAlert className="size-5 shrink-0" />{m.alert}</p>
-        <div className="mt-5 rounded-2xl border border-white/25 bg-slate-950/75 p-4 sm:p-6">
-          <h2 id="solar-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
-          <p className="mt-3 whitespace-pre-line text-base font-bold leading-relaxed sm:text-lg">{m.body}</p>
-          <p className="text-glow mt-3 text-2xl font-bold sm:text-3xl">¿Qué hacemos?</p>
-        </div>
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
-          {m.choices.map((c, i) => (
-            <button key={c.id} onClick={() => onChoose(c)} className={`solar-choice ${i === 0 ? "solar-power" : "solar-shelter"} flex min-w-0 flex-col rounded-2xl p-4 text-left sm:p-5`}>
-              <span className="text-xl font-bold uppercase sm:text-2xl"><span aria-hidden="true">{i === 0 ? "⚡" : "🛡️"}</span> ¡{c.title}!</span>
-              <span className="mb-4 mt-2 flex-1 text-sm font-extrabold">{c.subtitle}</span>
-              <Effects c={c} />
-            </button>
-          ))}
+      <section className="solar-stage" aria-labelledby="solar-title">
+        <img className="solar-backdrop" src={solarStormBg} alt="Maggie y su gato observan la base lunar y la tormenta solar desde el interior de la estación." />
+        <div className="solar-stage-content">
+          <div className="solar-story rounded-2xl p-4 sm:p-5">
+            <p className="solar-alert inline-flex items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-bold sm:text-sm"><TriangleAlert className="size-4 shrink-0" />{m.alert}</p>
+            <h2 id="solar-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
+            <p className="mt-2 whitespace-pre-line text-base font-bold leading-relaxed">{m.body}</p>
+            <p className="mt-2 text-lg font-bold">¿Qué hacemos?</p>
+          </div>
+          <div className="solar-decisions grid gap-4 md:grid-cols-2" aria-label="Decisiones de la tormenta solar">
+            {m.choices.map((c, i) => (
+              <button key={c.id} onClick={() => onChoose(c)} className={`solar-choice ${i === 0 ? "solar-power" : "solar-shelter"} flex min-w-0 flex-col rounded-2xl p-4 text-left sm:p-5`}>
+                <span className="text-xl font-bold uppercase sm:text-2xl"><span aria-hidden="true">{i === 0 ? "⚡" : "🛡️"}</span> ¡{c.title}!</span>
+                <span className="mb-4 mt-2 flex-1 text-sm font-extrabold">{c.subtitle}</span>
+                <Effects c={c} />
+              </button>
+            ))}
+          </div>
         </div>
       </section>
       <Footer />
-    </Screen>
+    </main>
   );
 }
 
