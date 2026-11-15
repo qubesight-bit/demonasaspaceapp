@@ -15,6 +15,30 @@ function start() {
 }
 
 describe("lunar exploration", () => {
+  it("waits for the video, prevents repeated input and leaves missions and resources unchanged", () => {
+    start();
+    const advanceButton = screen.getByRole("button", { name: "Avanzar" });
+    fireEvent.click(advanceButton);
+    const video = screen.getByLabelText("Transición entre ubicaciones de la base lunar") as HTMLVideoElement;
+    expect(video.autoplay).toBe(true);
+    expect(video.muted).toBe(true);
+    expect(video.playsInline).toBe(true);
+    expect(video.controls).toBe(false);
+    expect(video.loop).toBe(false);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Estás en:/ })).not.toBeInTheDocument();
+    fireEvent.click(advanceButton);
+    fireEvent.ended(video);
+    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/Primero completá MISIÓN 01/)).toBeInTheDocument();
+    for (const value of ["35%", "70%", "80%"]) expect(screen.getByText(value)).toBeInTheDocument();
+    const blockedButton = screen.getByRole("button", { name: "Avanzar" });
+    expect(blockedButton).toBeDisabled();
+    fireEvent.click(blockedButton);
+    expect(screen.queryByLabelText("Transición entre ubicaciones de la base lunar")).not.toBeInTheDocument();
+  });
+
   it("turns in both directions, wraps around and respects walls", () => {
     let pose = INITIAL_POSE;
     for (let i = 0; i < 4; i++) pose = turn(pose, "right");
@@ -39,6 +63,7 @@ describe("lunar exploration", () => {
   it("blocks future missions and preserves resources while navigating", () => {
     start();
     click("Avanzar");
+    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
     expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
     expect(screen.getByText(/Primero completá MISIÓN 01/)).toBeInTheDocument();
@@ -46,6 +71,7 @@ describe("lunar exploration", () => {
     click(/Girar a la derecha/i);
     click(/Girar a la derecha/i);
     click("Avanzar");
+    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
     expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toBeInTheDocument();
     for (const value of ["35%", "70%", "80%"]) expect(screen.getByText(value)).toBeInTheDocument();
     click(/Iniciar MISIÓN 01/i);
@@ -67,6 +93,7 @@ describe("lunar exploration", () => {
     expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
     expect(screen.getByText("55%")).toBeInTheDocument();
     click("Avanzar");
+    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
     expect(screen.getByRole("button", { name: /Iniciar MISIÓN 02/i })).toBeInTheDocument();
     click(/Iniciar MISIÓN 02/i);
     expect(screen.getByRole("heading", { name: /Las plantas se están congelando/ })).toBeInTheDocument();

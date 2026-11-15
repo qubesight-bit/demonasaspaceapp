@@ -18,6 +18,7 @@ function moveToNext(index: number) {
   // The four rooms form a square: east, north, then west.
   if (index > 0) fireEvent.click(screen.getByRole("button", { name: /Girar a la izquierda/i }));
   fireEvent.click(screen.getByRole("button", { name: "Avanzar" }));
+  fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
 }
 
 describe("four mission report flow", () => {

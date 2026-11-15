@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
+import corridorVideo from "@/assets/prueba-velocidad.mp4";
 import menuBg from "@/assets/men_principal_0.jpg.asset.json";
 import menuKid from "@/assets/men_principal_1.jpg.asset.json";
 import questPanels from "@/assets/quest-01-paneles.png";
@@ -24,6 +25,7 @@ const QUEST_ART = [
 type Phase =
   | { kind: "menu" }
   | { kind: "explore"; index: number }
+  | { kind: "travel"; index: number; target: Pose }
   | { kind: "mission"; index: number }
   | { kind: "report"; index: number; choice: Choice; before: Resources }
   | { kind: "win" }
@@ -176,8 +178,8 @@ function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: s
   );
 }
 
-function ExplorationScreen({ index, r, pose, onMove, onMission }: {
-  index: number; r: Resources; pose: Pose; onMove: (pose: Pose) => void; onMission: () => void;
+function ExplorationScreen({ index, r, pose, onMove, onAdvance, onMission }: {
+  index: number; r: Resources; pose: Pose; onMove: (pose: Pose) => void; onAdvance: () => void; onMission: () => void;
 }) {
   const next = destination(pose);
   const location = LOCATIONS[pose.location];
@@ -204,7 +206,7 @@ function ExplorationScreen({ index, r, pose, onMove, onMission }: {
         <p className="text-center font-bold">Objetivo: {MISSIONS[index]!.code} — {LOCATIONS[index]!.name}</p>
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <button onClick={() => onMove(turn(pose, "left"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↶</span>Girar a la izquierda</button>
-          <button onClick={() => onMove(advance(pose))} disabled={next === null} className="glass-button exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↑</span>Avanzar</button>
+          <button onClick={onAdvance} disabled={next === null} className="glass-button exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↑</span>Avanzar</button>
           <button onClick={() => onMove(turn(pose, "right"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↷</span>Girar a la derecha</button>
         </div>
         {available ? (
@@ -368,9 +370,28 @@ export function Game() {
     case "menu":
       return <Menu onStart={start} />;
     case "explore":
-      return <ExplorationScreen index={phase.index} r={r} pose={pose} onMove={setPose} onMission={() => {
+      return <ExplorationScreen index={phase.index} r={r} pose={pose} onMove={setPose} onAdvance={() => {
+        if (destination(pose) !== null) setPhase({ kind: "travel", index: phase.index, target: advance(pose) });
+      }} onMission={() => {
         if (pose.location === phase.index) setPhase({ kind: "mission", index: phase.index });
       }} />;
+    case "travel":
+      return (
+        <main className="lunar-game flex min-h-dvh items-center justify-center bg-black" aria-label="Recorriendo el corredor lunar" aria-busy="true">
+          <video
+            src={corridorVideo}
+            autoPlay
+            muted
+            playsInline
+            className="h-dvh w-full object-contain"
+            aria-label="Transición entre ubicaciones de la base lunar"
+            onEnded={() => {
+              setPose(phase.target);
+              setPhase({ kind: "explore", index: phase.index });
+            }}
+          />
+        </main>
+      );
     case "mission":
       return <MissionScreen index={phase.index} r={r} onExplore={() => setPhase({ kind: "explore", index: phase.index })} onChoose={(c) => { const next = applyChoice(r, c); setR(next); setPhase({ kind: "report", index: phase.index, choice: c, before: r }); }} />;
     case "report":
