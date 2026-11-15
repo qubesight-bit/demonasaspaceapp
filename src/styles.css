@@ -181,6 +181,18 @@
 .solar-choice .bg-muted { background: #071b3a; color: white; }
 .solar-choice:hover { transform: translateY(-2px); }
 .solar-choice:active { transform: translateY(2px); }
+
+.exploration-scene { display: flex; flex-direction: column; min-height: 100svh; }
+.exploration-view { position: relative; isolation: isolate; margin: 0 .75rem; overflow: hidden; border: 1px solid var(--glass-hi); border-radius: 1.5rem; }
+.exploration-art { display: block; width: 100%; aspect-ratio: 1672 / 941; object-fit: cover; }
+.exploration-caption { margin: .75rem; background: var(--background); border: 1px solid var(--primary); }
+.exploration-control { min-height: 96px; }
+.exploration-control:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+@media (min-width: 640px) {
+  .exploration-view { width: min(calc(100% - 1.5rem), 76rem); align-self: center; }
+  .exploration-art { max-height: 58svh; object-fit: contain; }
+  .exploration-caption { position: absolute; bottom: 0; left: 0; max-width: calc(100% - 1.5rem); background: oklch(0.18 0.05 262 / .94); }
+}
 @media (prefers-reduced-motion: reduce) {
   .lunar-game *, .lunar-game *::before, .lunar-game *::after { animation: none !important; transition: none !important; }
 }
