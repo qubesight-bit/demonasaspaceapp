@@ -98,7 +98,7 @@ function Effects({ c }: { c: Choice }) {
 }
 
 function Menu({ onStart }: { onStart: () => void }) {
-  const [panel, setPanel] = useState<null | "guide" | "credits">(null);
+  const [panel, setPanel] = useState<null | "guide" | "science" | "credits">(null);
   return (
     <Screen bg={menuBg.url} dim={false}>
       <header className="flex items-center justify-between">
@@ -125,6 +125,7 @@ function Menu({ onStart }: { onStart: () => void }) {
             </button>
             <div className="grid grid-cols-2 gap-3">
               <MenuTile icon={BookOpen} label="Cómo jugar" onClick={() => setPanel("guide")} />
+              <MenuTile icon={Lightbulb} label="La ciencia" onClick={() => setPanel("science")} />
               <MenuTile icon={Users} label="El equipo" onClick={() => setPanel("credits")} />
             </div>
           </div>
@@ -149,6 +150,26 @@ function Menu({ onStart }: { onStart: () => void }) {
                 </ul>
                 <p className="mt-4">Mira las barras de arriba. Cada decisión puede subir o bajar tus recursos. <b>Si una barra llega al 10% o menos, la partida termina.</b> ¡Supera las {MISSIONS.length} misiones para ganar!</p>
                 <p className="mt-3 text-sm text-muted-foreground">Esta base es imaginaria. Los datos sobre la Luna se basan en la ciencia.</p>
+                <button onClick={() => setPanel(null)} className="glass-button mt-5 w-full rounded-full py-3 font-bold">¡Entendido!</button>
+              </>
+            ) : panel === "science" ? (
+              <>
+                <h2 id="menu-panel-title" className="pr-10 text-2xl font-bold text-primary">La ciencia detrás de la misión</h2>
+                <p className="mt-3">Las barras de <b>Energía</b>, <b>Comida</b> y <b>Seguridad</b> son indicadores simples de este entrenamiento. Sus porcentajes no son mediciones reales de NASA.</p>
+                <p className="mt-3">Para sobrevivir en la Luna también hacen falta oxígeno, agua, presión, control de temperatura y otros sistemas de soporte vital. Nuestras decisiones se inspiran en desafíos reales de exploración lunar.</p>
+                <section className="mt-4 rounded-2xl bg-muted/60 p-4" aria-labelledby="communications-title">
+                  <h3 id="communications-title" className="font-extrabold text-primary">📡 Mensajes entre la Tierra y la Luna</h3>
+                  <p className="mt-2">Un mensaje no llega al instante: la señal tarda aproximadamente 1,3 segundos en viajar en un sentido, según la distancia. También hace falta una conexión o una línea de visión adecuada; desde algunas zonas de la Luna la Tierra puede quedar oculta.</p>
+                </section>
+                <p className="mt-4 text-sm text-muted-foreground">Fuentes oficiales:</p>
+                <ul className="mt-2 max-w-full space-y-2 break-words text-sm font-bold underline">
+                  <li><a href="https://science.nasa.gov/science-research/heliophysics/how-nasa-will-protect-astronauts-from-space-radiation-at-the-moon/" target="_blank" rel="noreferrer">NASA: protección frente a radiación espacial en la Luna</a></li>
+                  <li><a href="https://www.nasa.gov/lunar-surface-technology/" target="_blank" rel="noreferrer">NASA: polvo lunar y tecnología de superficie</a></li>
+                  <li><a href="https://www.esa.int/es/articles/surviving-the-long-dark-night-of-the-moon" target="_blank" rel="noreferrer">ESA: la larga noche lunar</a></li>
+                  <li><a href="https://www.asc-csa.gc.ca/eng/youth-educators/activities/fitness-and-nutrition/interplanetary-farming.asp" target="_blank" rel="noreferrer">CSA: cultivar alimentos fuera de la Tierra</a></li>
+                  <li><a href="https://ntrs.nasa.gov/api/citations/20130011595/downloads/20130011595.pdf" target="_blank" rel="noreferrer">NASA: demora de comunicación Tierra-Luna</a></li>
+                  <li><a href="https://www.nasa.gov/glenn/glenn-expertise-space-exploration/scan/lunar-surface-propagation/" target="_blank" rel="noreferrer">NASA: visibilidad y señal en la superficie lunar</a></li>
+                </ul>
                 <button onClick={() => setPanel(null)} className="glass-button mt-5 w-full rounded-full py-3 font-bold">¡Entendido!</button>
               </>
             ) : (

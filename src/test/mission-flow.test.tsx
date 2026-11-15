@@ -22,8 +22,8 @@ function moveToNext(index: number) {
 
 describe("four mission report flow", () => {
   it.each([
-    { choice: "Mantener la energía", ending: "¡MISIÓN INTERRUMPIDA!", energy: "100%", food: "70%", safety: "5%" },
-    { choice: "Todos al refugio", ending: "¡MISIÓN CUMPLIDA!", energy: "80%", food: "55%", safety: "65%" },
+    { choice: "Continuar afuera", ending: "¡MISIÓN INTERRUMPIDA!", energy: "100%", food: "70%", safety: "5%" },
+    { choice: "Ir al refugio", ending: "¡MISIÓN CUMPLIDA!", energy: "80%", food: "55%", safety: "65%" },
   ])("reports solar choice $choice before showing $ending", ({ choice, ending, energy, food, safety }) => {
     render(<Game />);
     fireEvent.click(screen.getByRole("button", { name: /A JUGAR/i }));

@@ -76,11 +76,11 @@ export const MISSIONS: Mission[] = [
     alert: "¡ALERTA! ¡EL SOL ESTÁ ENFURECIDO!",
     sensor: "Aviso de vigilancia solar",
     headline: "¡Una tormenta solar se dirige hacia la Luna!",
-    body: "¡Puede enviar partículas peligrosas que dañen los equipos y afecten a los astronautas!\n¡Tenemos que proteger nuestra base antes de que lleguen!",
-    fact: "Las tormentas solares pueden enviar partículas de alta energía. La Luna no tiene una atmósfera densa ni un campo magnético global como la Tierra. Los refugios con capas de protección ayudan a reducir la exposición del equipo.",
+    body: "Una tormenta solar puede enviar partículas energéticas solares, llamadas SEP.\nFuera de un refugio protegido, estas partículas pueden afectar a astronautas y equipos. ¡Decidí antes de que lleguen!",
+    fact: "Las partículas energéticas solares, o SEP, pueden ser peligrosas para las personas en la Luna. La Luna no tiene una atmósfera densa ni un campo magnético global como la Tierra. Un refugio con buen blindaje ayuda a reducir la exposición.",
     choices: [
-      { id: "power", title: "Mantener la energía", subtitle: "Seguimos cargando las baterías, pero dejamos los equipos más expuestos.", effects: { energy: 30, safety: -35 }, positive: "¡Las baterías almacenan más energía para la base!", cost: "Los equipos y los astronautas quedan más expuestos a las partículas solares." },
-      { id: "shelter", title: "Todos al refugio", subtitle: "Ponemos los equipos en modo seguro y protegemos a los astronautas.", effects: { safety: 25, food: -15 }, positive: "¡El refugio protege al equipo durante la tormenta solar!", cost: "Mientras el equipo está refugiado, nadie cuida las plantas y se pierde comida." },
+      { id: "power", title: "Continuar afuera", subtitle: "Seguimos las actividades exteriores para mantener la energía de la base.", effects: { energy: 30, safety: -35 }, positive: "¡La base mantiene más energía disponible!", cost: "Fuera del refugio, astronautas y equipos quedan más expuestos a las partículas solares." },
+      { id: "shelter", title: "Ir al refugio", subtitle: "Suspendemos actividades exteriores y usamos un refugio con blindaje.", effects: { safety: 25, food: -15 }, positive: "¡El refugio con blindaje reduce la exposición del equipo!", cost: "Mientras el equipo está refugiado, se retrasa el cuidado de las plantas y baja la comida disponible." },
     ],
   },
 ];
