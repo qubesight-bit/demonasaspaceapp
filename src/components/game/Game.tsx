@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, Trophy, TriangleAlert, TrendingUp, Users, FlaskConical, X } from "lucide-react";
+import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import menuBg from "@/assets/men_principal_0.jpg.asset.json";
 import menuKid from "@/assets/men_principal_1.jpg.asset.json";
@@ -12,6 +12,8 @@ import reportBg from "@/assets/informe_de_decisi_n_0.jpg.asset.json";
 import winBg from "@/assets/misi_n_cumplida_victoria_0.jpg.asset.json";
 import winMaggie from "@/assets/misi_n_cumplida_victoria_1.jpg.asset.json";
 import loseBg from "@/assets/misi_n_interrumpida_derrota_0.jpg.asset.json";
+
+import { solarStormBg } from "@/assets/solar-storm";
 
 const ART = [
   { bg: m1Bg.url, maggie: m1Maggie.url },
@@ -32,41 +34,40 @@ const TEXT = { energy: "text-energy", food: "text-food", safety: "text-safety" }
 
 function Screen({ bg, children, dim = true }: { bg: string; children: ReactNode; dim?: boolean }) {
   return (
-    <main className="relative min-h-screen overflow-hidden">
+    <main className="lunar-game relative isolate min-h-dvh overflow-x-clip">
       <img src={bg} alt="" className="absolute inset-0 h-full w-full object-cover" />
       {dim && <div className="absolute inset-0 bg-scrim" />}
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-5 sm:px-8">{children}</div>
+      <div className="relative z-10 mx-auto flex min-h-dvh min-w-0 max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">{children}</div>
     </main>
   );
 }
 
 function Footer() {
-  return <p className="mt-auto pt-6 text-center text-xs font-bold uppercase tracking-widest text-muted-foreground">PopTART-Cats • NASA Space Apps Challenge • Concepto: Maggie</p>;
+  return <p className="mt-auto pt-4 text-center text-sm font-bold text-muted-foreground">PopTART-Cats • NASA Space Apps Challenge • Idea: Maggie</p>;
 }
 
 function ResourceBar({ k, value, delta }: { k: ResourceKey; value: number; delta?: number | undefined }) {
   const Icon = ICON[k];
   return (
-    <div className="glass flex flex-1 items-center gap-3 rounded-full px-4 py-2">
-      <Icon className={`size-5 shrink-0 ${TEXT[k]}`} />
-      <div className="min-w-0 flex-1">
-        <div className="flex justify-between text-xs font-extrabold uppercase tracking-wider">
-          <span>{RESOURCE_LABEL[k]}</span>
-          <span className={value <= 20 ? "text-destructive" : ""}>
-            {value}%{delta ? <span className="ml-1 text-[10px]">{delta > 0 ? "▲ +" : "▼ "}{delta}%</span> : null}
-          </span>
-        </div>
-        <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+    <div className="glass min-w-0 rounded-2xl px-2 py-2 sm:px-4">
+      <div className="flex items-center justify-center gap-1 text-xs font-extrabold sm:text-sm">
+        <Icon className={`size-4 shrink-0 ${TEXT[k]}`} />
+        <span>{RESOURCE_LABEL[k]}</span>
+      </div>
+      <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 text-sm font-extrabold">
+        <span className={value <= 20 ? "text-destructive" : ""}>{value}%</span>
+        {delta ? <span className="text-xs">{delta > 0 ? "▲ +" : "▼ "}{delta}%</span> : null}
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
           <div className={`h-full rounded-full ${BAR[k]} transition-all duration-700`} style={{ width: `${value}%` }} />
-        </div>
       </div>
     </div>
   );
 }
 
-function Hud({ r, before }: { r: Resources; before?: Resources }) {
+function Hud({ r, before, sticky = false }: { r: Resources; before?: Resources; sticky?: boolean }) {
   return (
-    <div className="flex flex-col gap-2 sm:flex-row">
+    <div className={`grid grid-cols-3 gap-2 ${sticky ? "sticky top-2 z-20 rounded-3xl bg-background/95 p-2 shadow-lg" : ""}`} aria-label="Recursos de la base">
       {(Object.keys(r) as ResourceKey[]).map((k) => (
         <ResourceBar key={k} k={k} value={r[k]} delta={before ? r[k] - before[k] : undefined} />
       ))}
@@ -83,7 +84,7 @@ function Effects({ c }: { c: Choice }) {
         const v = c.effects[k]!;
         const Icon = ICON[k];
         return (
-          <span key={k} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-extrabold uppercase">
+          <span key={k} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-sm font-extrabold">
             <Icon className={`size-3.5 ${TEXT[k]}`} />
             {v > 0 ? `+${v}%` : `${v}%`} {RESOURCE_LABEL[k]}
           </span>
@@ -99,63 +100,62 @@ function Menu({ onStart }: { onStart: () => void }) {
     <Screen bg={menuBg.url} dim={false}>
       <header className="flex items-center justify-between">
         <div className="glass flex items-center gap-3 rounded-full px-5 py-2">
-          <Rocket className="size-5 text-primary" />
+          <Rocket className="size-5 shrink-0 text-primary" />
           <div className="leading-tight">
             <p className="text-xs font-extrabold uppercase tracking-widest text-primary">NASA Space Apps 2026</p>
-            <p className="text-sm font-bold">PopTART-Cats Edition</p>
+            <p className="text-sm font-bold">Equipo PopTART-Cats</p>
           </div>
         </div>
       </header>
-      <section className="my-auto flex flex-col items-center text-center animate-rise">
-        <span className="glass rounded-full px-5 py-1.5 text-sm font-bold uppercase tracking-[0.25em]">Aventura Lunar Interactiva</span>
-        <h1 className="text-glow mt-4 text-5xl font-bold sm:text-7xl">¡MISIÓN BASE LUNAR!</h1>
-        <p className="glass mt-4 rounded-full px-6 py-2 font-bold sm:text-lg">Misión 01 — El Despertar de la Cúpula Científica</p>
-        <div className="mt-8 flex flex-col items-center gap-6 md:flex-row">
-          <div className="relative">
-            <span className="glass absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-2xl px-4 py-1.5 text-sm font-bold">¡Hola, cadete! ¿Listo para explorar?</span>
-            <img src={menuKid.url} alt="Astronauta cadete saludando" className="animate-float w-64 rounded-2xl border border-primary/50 shadow-2xl sm:w-80" />
+      <section className="my-auto flex min-w-0 flex-col items-center py-4 text-center animate-rise">
+        <span className="glass rounded-full px-5 py-1.5 text-sm font-bold">¡Una aventura en la Luna!</span>
+        <h1 className="text-glow mt-4 text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">¡MISIÓN BASE LUNAR!</h1>
+        <p className="glass mt-4 rounded-2xl px-5 py-2 font-bold sm:text-lg">¡Cuida la energía, la comida y la seguridad de tu base!</p>
+        <div className="mt-6 flex w-full min-w-0 flex-col items-center gap-6 md:flex-row md:justify-center">
+          <div className="flex w-full max-w-64 shrink-0 flex-col items-center gap-4 sm:max-w-72">
+            <span className="glass rounded-2xl px-4 py-2 text-base font-bold">¡Hola! ¿Listo para explorar?</span>
+            <img src={menuKid.url} alt="Astronauta saludando" className="animate-float h-auto w-full rounded-2xl border border-primary/50 object-contain shadow-2xl" />
           </div>
           <div className="flex w-full max-w-md flex-col gap-3">
-            <button onClick={onStart} className="glass-button flex items-center justify-between rounded-full px-6 py-4 text-2xl font-bold">
-              <Play className="size-7 fill-current" /> INICIAR MISIÓN <Rocket className="size-6" />
+            <button onClick={onStart} className="glass-button flex items-center justify-center gap-3 rounded-full px-5 py-4 text-xl font-bold sm:text-2xl">
+              <Play className="size-6 shrink-0 fill-current" /> ¡A JUGAR! <Rocket className="size-6 shrink-0" />
             </button>
             <div className="grid grid-cols-2 gap-3">
-              <MenuTile icon={BookOpen} label="Guía Lunar" onClick={() => setPanel("guide")} />
-              <MenuTile icon={Trophy} label="Logros" onClick={() => setPanel("guide")} />
-              <MenuTile icon={FlaskConical} label="Invernadero" onClick={onStart} />
-              <MenuTile icon={Users} label="Créditos" onClick={() => setPanel("credits")} />
+              <MenuTile icon={BookOpen} label="Cómo jugar" onClick={() => setPanel("guide")} />
+              <MenuTile icon={Users} label="El equipo" onClick={() => setPanel("credits")} />
             </div>
           </div>
         </div>
       </section>
-      <footer className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
-        <span className="glass rounded-full px-4 py-1.5">🎨 Arte & Concepto: Maggie • 💻 Dev: Ernesto • 🔬 Ciencia: Emmanuel</span>
-        <span className="uppercase tracking-widest text-muted-foreground">v2.0 Remastered • PopTART-Cats</span>
+      <footer className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold">
+        <span className="glass rounded-2xl px-4 py-2">🎨 Arte e idea: Maggie • 💻 Código: Ernesto • 🔬 Ciencia: Emmanuel</span>
+        <span className="text-muted-foreground">Versión 2.0 • PopTART-Cats</span>
       </footer>
       {panel && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-scrim p-4" onClick={() => setPanel(null)}>
-          <div className="glass animate-rise relative w-full max-w-lg rounded-3xl bg-popover p-6" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setPanel(null)} className="absolute right-4 top-4" aria-label="Cerrar"><X /></button>
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-scrim p-4" onClick={() => setPanel(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="menu-panel-title" className="glass animate-rise relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl bg-popover p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setPanel(null)} className="absolute right-2 top-2 flex w-12 items-center justify-center rounded-full" aria-label="Cerrar"><X /></button>
             {panel === "guide" ? (
               <>
-                <h2 className="text-2xl font-bold text-primary">Manual de Supervivencia Lunar</h2>
-                <p className="mt-3">Bienvenido a la <b>Base Lunar Alfa</b>. Como comandante del módulo ambiental, tus decisiones equilibran los recursos vitales:</p>
+                <h2 id="menu-panel-title" className="pr-10 text-2xl font-bold text-primary">¡Aprende a jugar!</h2>
+                <p className="mt-3">¡Bienvenido a la <b>Base Lunar Alfa</b>! Ayuda a Maggie a cuidar la base. En cada misión, elige una de dos opciones.</p>
                 <ul className="mt-4 space-y-2 font-bold">
-                  <li>⚡ ENERGÍA — Calefacción y luces</li>
-                  <li>🌱 COMIDA — Plantas de cultivo</li>
-                  <li>🛡️ SEGURIDAD — Integridad del domo</li>
+                  <li>⚡ Energía: para las luces y el calor.</li>
+                  <li>🌱 Comida: para alimentar al equipo.</li>
+                  <li>🛡️ Seguridad: para proteger al equipo y la base.</li>
                 </ul>
-                <p className="mt-4 text-sm text-muted-foreground">Si algún recurso cae al 10% o menos, la misión se interrumpe. Inspirado en investigaciones reales de astrobiología para hábitats lunares autosuficientes.</p>
-                <button onClick={() => setPanel(null)} className="glass-button mt-5 w-full rounded-full py-3 font-bold">¡Entendido, Comandante!</button>
+                <p className="mt-4">Mira las barras de arriba. Cada decisión puede subir o bajar tus recursos. <b>Si una barra llega al 10% o menos, la partida termina.</b> ¡Supera las {MISSIONS.length} misiones para ganar!</p>
+                <p className="mt-3 text-sm text-muted-foreground">Esta base es imaginaria. Los datos sobre la Luna se basan en la ciencia.</p>
+                <button onClick={() => setPanel(null)} className="glass-button mt-5 w-full rounded-full py-3 font-bold">¡Entendido!</button>
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-bold text-primary">PopTART-Cats</h2>
+                <h2 id="menu-panel-title" className="pr-10 text-2xl font-bold text-primary">Equipo PopTART-Cats</h2>
                 <p className="text-sm text-muted-foreground">NASA Space Apps Challenge 2026</p>
                 <ul className="mt-4 space-y-2 font-bold">
-                  <li>👩‍🎨 Arte & Concepto: Maggie</li>
-                  <li>💻 Programación & Mecánicas: Ernesto</li>
-                  <li>🔬 Investigación & Ciencia: Emmanuel</li>
+                  <li>👩‍🎨 Dibujos e idea: Maggie</li>
+                  <li>💻 Código del juego: Ernesto</li>
+                  <li>🔬 Ciencia: Emmanuel</li>
                 </ul>
                 <button onClick={() => setPanel(null)} className="glass-button mt-5 w-full rounded-full py-3 font-bold">Cerrar</button>
               </>
@@ -170,46 +170,79 @@ function Menu({ onStart }: { onStart: () => void }) {
 function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: string; onClick: () => void }) {
   return (
     <button onClick={onClick} className="glass flex items-center gap-2 rounded-2xl px-4 py-3 font-bold transition hover:-translate-y-0.5">
-      <Icon className="size-5 text-primary" /> {label}
+      <Icon className="size-5 shrink-0 text-primary" /> {label}
     </button>
   );
 }
 
 function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
   const m = MISSIONS[index]!;
+  if (m.id === 4) return <SolarMission index={index} r={r} onChoose={onChoose} />;
   const art = ART[index]!;
   return (
     <Screen bg={art.bg}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-        <span className="glass self-start rounded-full px-5 py-2 text-sm font-extrabold tracking-widest">{m.code} | {m.title}</span>
-        <div className="flex-1"><Hud r={r} /></div>
-      </div>
-      <section key={m.id} className="my-auto flex flex-col items-center gap-6 py-8 md:flex-row md:items-end animate-rise">
-        <figure className="shrink-0 text-center">
-          <img src={art.maggie} alt="Maggie, la astronauta" className="size-40 rounded-full border-4 border-primary/60 object-cover shadow-2xl sm:size-48" />
-          <figcaption className="mt-2 text-sm font-extrabold tracking-widest">MAGGIE • EVA</figcaption>
+      <Hud r={r} sticky />
+      <span className="glass self-start rounded-2xl px-4 py-2 text-sm font-extrabold">{m.code} • {m.title}</span>
+      <section key={m.id} className="my-auto flex min-w-0 flex-col items-center gap-5 py-3 md:flex-row md:items-center animate-rise">
+        <figure className="w-48 max-w-full shrink-0 text-center sm:w-56 lg:w-64">
+          <img src={art.maggie} alt="Maggie, la astronauta" className="h-auto max-h-72 w-full rounded-3xl border-4 border-primary/60 bg-background/20 object-contain shadow-2xl" />
+          <figcaption className="mt-2 text-sm font-extrabold">Maggie, tu compañera de misión</figcaption>
         </figure>
-        <div className="glass flex-1 rounded-3xl p-6">
+        <div className="glass w-full min-w-0 flex-1 rounded-3xl p-5 sm:p-6">
           <p className="flex flex-wrap items-center gap-3 text-sm font-extrabold">
-            <span className="inline-flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-destructive-foreground"><TriangleAlert className="size-4" />{m.alert}</span>
+            <span className="inline-flex items-center gap-2 rounded-2xl bg-destructive px-3 py-2 text-destructive-foreground"><TriangleAlert className="size-4 shrink-0" />{m.alert}</span>
             <span className="text-muted-foreground">{m.sensor}</span>
           </p>
-          <h2 className="mt-3 text-3xl font-bold">{m.headline}</h2>
-          <p className="mt-2 text-lg">{m.body} <b>¿Qué decisión tomamos?</b></p>
+          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">{m.headline}</h2>
+          <p className="mt-3 whitespace-pre-line text-lg leading-relaxed">{m.body}</p>
+          <p className="mt-3 text-lg font-bold">¿Qué hacemos?</p>
         </div>
       </section>
       <div className="grid gap-4 md:grid-cols-2">
         {m.choices.map((c) => (
-          <button key={c.id} onClick={() => onChoose(c)} className="glass group flex items-center gap-4 rounded-3xl p-5 text-left transition hover:-translate-y-1 hover:border-primary">
-            <div className="flex-1">
-              <p className="text-xl font-bold uppercase">{c.title}</p>
-              <p className="mb-3 text-sm text-muted-foreground">{c.subtitle}</p>
+          <button key={c.id} onClick={() => onChoose(c)} className="glass group flex min-w-0 items-center gap-3 rounded-3xl p-5 text-left transition hover:-translate-y-1 hover:border-primary">
+            <div className="min-w-0 flex-1">
+              <p className="text-xl font-bold">{c.title}</p>
+              <p className="mb-3 mt-1 text-base text-muted-foreground">{c.subtitle}</p>
               <Effects c={c} />
             </div>
-            <ArrowRight className="size-6 text-primary transition group-hover:translate-x-1" />
+            <ArrowRight className="size-6 shrink-0 text-primary transition group-hover:translate-x-1" />
           </button>
         ))}
       </div>
+      <Footer />
+    </Screen>
+  );
+}
+
+function SolarMission({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
+  const m = MISSIONS[index]!;
+  return (
+    <Screen bg={solarStormBg}>
+      <header className="solar-header flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold text-energy">{m.code} • Misión {index + 1} de {MISSIONS.length}</p>
+          <h1 className="text-xl font-bold">¡Misión Base Lunar! — <span className="text-energy">{m.title}</span></h1>
+        </div>
+        <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
+      </header>
+      <section className="solar-panel animate-rise my-auto mx-auto w-full max-w-3xl rounded-3xl p-4 text-center sm:p-8" aria-labelledby="solar-title">
+        <p className="solar-alert inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-bold sm:text-base"><TriangleAlert className="size-5 shrink-0" />{m.alert}</p>
+        <div className="mt-5 rounded-2xl border border-white/25 bg-slate-950/75 p-4 sm:p-6">
+          <h2 id="solar-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
+          <p className="mt-3 whitespace-pre-line text-base font-bold leading-relaxed sm:text-lg">{m.body}</p>
+          <p className="text-glow mt-3 text-2xl font-bold sm:text-3xl">¿Qué hacemos?</p>
+        </div>
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          {m.choices.map((c, i) => (
+            <button key={c.id} onClick={() => onChoose(c)} className={`solar-choice ${i === 0 ? "solar-power" : "solar-shelter"} flex min-w-0 flex-col rounded-2xl p-4 text-left sm:p-5`}>
+              <span className="text-xl font-bold uppercase sm:text-2xl"><span aria-hidden="true">{i === 0 ? "⚡" : "🛡️"}</span> ¡{c.title}!</span>
+              <span className="mb-4 mt-2 flex-1 text-sm font-extrabold">{c.subtitle}</span>
+              <Effects c={c} />
+            </button>
+          ))}
+        </div>
+      </section>
       <Footer />
     </Screen>
   );
@@ -222,30 +255,30 @@ function Report({ index, choice, before, r, onNext }: { index: number; choice: C
   const losses = fx.filter(([, v]) => v < 0);
   return (
     <Screen bg={reportBg.url}>
-      <Hud r={r} before={before} />
-      <section className="glass animate-rise my-auto rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center justify-between border-b pb-4">
-          <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-primary">Telemetría de la Base • {m.code}</p>
-            <h2 className="text-xl font-bold">INFORME DE MISIÓN — EVALUACIÓN</h2>
+      <Hud r={r} before={before} sticky />
+      <section className="glass animate-rise my-auto rounded-3xl p-5 sm:p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+          <div className="min-w-0">
+            <p className="text-sm font-extrabold text-primary">{m.code} • Tu decisión</p>
+            <h2 className="text-2xl font-bold">¡Mira qué pasó!</h2>
           </div>
-          <span className="rounded-full bg-accent px-3 py-1 text-xs font-extrabold text-accent-foreground">EJECUTADO</span>
+          <span className="rounded-full bg-accent px-3 py-1 text-sm font-extrabold text-accent-foreground">¡Listo!</span>
         </div>
-        <p className="mt-4 font-bold">Decisión Tomada: <span className="text-primary">{choice.title}</span></p>
+        <p className="mt-4 font-bold">Elegiste: <span className="text-primary">{choice.title}</span></p>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-muted/60 p-4">
-            <p className="flex items-center gap-2 font-extrabold uppercase text-food"><TrendingUp className="size-5" /> Impacto Positivo</p>
-            <p className="mt-1"><b>{gains.map(([k, v]) => `+${v}% ${RESOURCE_LABEL[k]}`).join(", ") || "Recurso estable"}</b> — {choice.positive}</p>
+            <p className="flex items-center gap-2 font-extrabold text-food"><TrendingUp className="size-5 shrink-0" /> Lo que ayudó</p>
+            <p className="mt-2"><b>{gains.map(([k, v]) => `+${v}% ${RESOURCE_LABEL[k]}`).join(", ") || "Sin aumento"}</b> — {choice.positive}</p>
           </div>
           <div className="rounded-2xl bg-muted/60 p-4">
-            <p className="flex items-center gap-2 font-extrabold uppercase text-energy"><TriangleAlert className="size-5" /> Costo & Riesgo</p>
+            <p className="flex items-center gap-2 font-extrabold text-energy"><TriangleAlert className="size-5 shrink-0" /> Lo que costó</p>
             <p className="mt-1"><b>{losses.map(([k, v]) => `${v}% ${RESOURCE_LABEL[k]}`).join(", ")}</b> — {choice.cost}</p>
           </div>
         </div>
-        <p className="mt-4 flex gap-3 rounded-2xl bg-muted/40 p-4"><Lightbulb className="size-6 shrink-0 text-secondary" /><span><b>Dato Científico:</b> {m.fact}</span></p>
+        <p className="mt-4 flex gap-3 rounded-2xl bg-muted/40 p-4"><Lightbulb className="size-6 shrink-0 text-secondary" /><span><b>¿Sabías que…?</b> {m.fact}</span></p>
       </section>
-      <button onClick={onNext} className="glass-button mx-auto flex items-center gap-3 rounded-full px-8 py-3 text-lg font-bold">
-        <Play className="size-5" /> Continuar Misión <ArrowRight className="size-5" />
+      <button onClick={onNext} className="glass-button mx-auto flex w-full max-w-sm items-center justify-center gap-3 rounded-full px-6 py-3 text-lg font-bold">
+        <Play className="size-5 shrink-0" /> Continuar <ArrowRight className="size-5 shrink-0" />
       </button>
       <Footer />
     </Screen>
@@ -256,23 +289,25 @@ function Win({ r, onRestart }: { r: Resources; onRestart: () => void }) {
   const avg = Math.round((r.energy + r.food + r.safety) / 3);
   return (
     <Screen bg={winBg.url}>
-      <div className="flex justify-between gap-2">
-        <div className="glass flex items-center gap-2 rounded-2xl px-4 py-2"><Medal className="text-secondary" /><div><p className="text-xs font-extrabold uppercase tracking-widest">Rango Asignado</p><p className="font-bold">Cadete Científico Experto ★★★</p></div></div>
-        <span className="glass self-center rounded-full px-4 py-2 text-xs font-extrabold uppercase tracking-widest">Ciclo Lunar 14: Estable</span>
+      <Hud r={r} sticky />
+      <div className="flex flex-wrap justify-between gap-2">
+        <div className="glass flex items-center gap-2 rounded-2xl px-4 py-2"><Medal className="shrink-0 text-secondary" /><div><p className="text-sm font-extrabold">¡Tu reconocimiento!</p><p className="font-bold">Explorador lunar ★★★</p></div></div>
+        <span className="glass self-center rounded-full px-4 py-2 text-sm font-extrabold">¡Base a salvo!</span>
       </div>
       <section className="animate-rise my-auto text-center">
-        <p className="text-sm font-extrabold uppercase tracking-widest text-secondary">★ ¡Misión 03 concluida! ★</p>
-        <h1 className="text-glow mt-2 text-5xl font-bold sm:text-6xl">¡MISIÓN CUMPLIDA!</h1>
-        <p className="mx-auto mt-3 max-w-2xl text-lg">¡Has asegurado la supervivencia y prosperidad de la <b>Base Lunar Alfa</b>! Las plantas florecen y la energía fluye radiante. ¡Yujuuu! 🎉</p>
+        <p className="text-sm font-extrabold text-secondary">★ ¡Superaste las {MISSIONS.length} misiones! ★</p>
+        <h1 className="text-glow mt-2 text-4xl font-bold leading-tight sm:text-6xl">¡MISIÓN CUMPLIDA!</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-lg">¡Cuidaste la <b>Base Lunar Alfa</b> y protegiste al equipo! Tus decisiones marcaron la diferencia. ¡Buen trabajo! 🎉</p>
         <div className="mt-8 flex flex-col items-center gap-6 md:flex-row md:justify-center">
-          <img src={winMaggie.url} alt="Maggie celebrando" className="animate-float size-48 rounded-full border-4 border-secondary object-cover" />
-          <div className="glass w-full max-w-lg rounded-3xl p-5 text-left">
-            <p className="mb-3 flex justify-between font-bold"><span>Estado de Recursos Finales</span><span className="text-primary">EFICIENCIA GLOBAL: {avg}%</span></p>
-            <div className="space-y-2"><Hud r={r} /></div>
+          <img src={winMaggie.url} alt="Maggie celebrando" className="animate-float h-auto max-h-72 w-52 max-w-full rounded-3xl border-4 border-secondary object-contain sm:w-60" />
+          <div className="glass w-full min-w-0 max-w-md rounded-3xl p-5 text-left">
+            <p className="text-xl font-bold">Así quedaron tus recursos</p>
+            <p className="mt-2 text-2xl font-bold text-primary">Promedio: {avg}%</p>
+            <p className="mt-2">Sumamos la energía, la comida y la seguridad. Luego dividimos entre tres.</p>
           </div>
         </div>
-        <button onClick={onRestart} className="glass-button mx-auto mt-8 flex items-center gap-2 rounded-full px-8 py-3 text-lg font-bold"><RotateCcw className="size-5" /> JUGAR DE NUEVO</button>
-        <p className="mt-2 text-sm text-muted-foreground">Reiniciar simulación desde Misión 01 • 🚀 ¡Maggie te saluda orgullosa, comandante!</p>
+        <button onClick={onRestart} className="glass-button mx-auto mt-6 flex w-full max-w-sm items-center justify-center gap-2 rounded-full px-6 py-3 text-lg font-bold"><RotateCcw className="size-5 shrink-0" /> Jugar de nuevo</button>
+        <p className="mt-3 text-base text-muted-foreground">¡Prueba otras decisiones desde la primera misión!</p>
       </section>
       <Footer />
     </Screen>
@@ -280,28 +315,28 @@ function Win({ r, onRestart }: { r: Resources; onRestart: () => void }) {
 }
 
 const LOSE_TEXT: Record<ResourceKey, [string, string]> = {
-  energy: ["Agotamiento de Energía", "Los sistemas auxiliares protegieron a la tripulación pero detuvieron las operaciones agrícolas automáticas."],
-  food: ["Escasez de Comida", "El invernadero no pudo producir suficientes cultivos para alimentar a la tripulación."],
-  safety: ["Integridad del Domo Comprometida", "La tripulación fue evacuada por seguridad y la base quedó en modo de protección."],
+  energy: ["Falta energía", "Queda muy poca energía para que la base siga funcionando."],
+  food: ["Falta comida", "Queda muy poca comida para alimentar al equipo."],
+  safety: ["Falta seguridad", "La base ya no es lo bastante segura. El equipo necesita refugiarse."],
 };
 
 function Lose({ failed, r, onRetry, onMenu }: { failed: ResourceKey; r: Resources; onRetry: () => void; onMenu: () => void }) {
   const [cause, detail] = LOSE_TEXT[failed];
   return (
     <Screen bg={loseBg.url}>
-      <div className="glass self-start rounded-full px-5 py-2 text-sm font-extrabold uppercase tracking-widest text-energy">Estado: Modo de Seguridad Activado</div>
+      <Hud r={r} sticky />
+      <div className="glass self-start rounded-2xl px-4 py-2 text-sm font-extrabold text-energy">¡El equipo necesita ayuda!</div>
       <section className="animate-rise my-auto mx-auto w-full max-w-3xl text-center">
-        <p className="inline-flex items-center gap-2 font-bold text-secondary"><Heart className="size-5 fill-current" /> ¡Casi lo logramos, cadete!</p>
-        <h1 className="text-glow mt-2 text-5xl font-bold">¡MISIÓN INTERRUMPIDA!</h1>
-        <p className="mt-3 text-lg">Un recurso crítico ha caído a niveles mínimos, pero la exploración espacial avanza aprendiendo de cada simulación.</p>
-        <div className="mt-6"><Hud r={r} /></div>
+        <p className="inline-flex items-center gap-2 font-bold text-secondary"><Heart className="size-5 shrink-0 fill-current" /> ¡Casi lo logramos!</p>
+        <h1 className="text-glow mt-2 text-4xl font-bold leading-tight sm:text-5xl">¡MISIÓN INTERRUMPIDA!</h1>
+        <p className="mt-3 text-lg">Una de tus barras llegó al 10% o menos. Esta partida terminó. ¡Puedes probar otra vez y elegir un nuevo camino!</p>
         <div className="mt-4 grid gap-4 text-left md:grid-cols-2">
-          <div className="glass rounded-2xl p-4"><p className="flex items-center gap-2 font-extrabold uppercase text-destructive"><TriangleAlert className="size-5" />Causa de Interrupción</p><p className="mt-1"><b>{cause}:</b> {detail}</p></div>
-          <div className="glass rounded-2xl p-4"><p className="flex items-center gap-2 font-extrabold uppercase text-secondary"><Lightbulb className="size-5" />Consejo de Misión</p><p className="mt-1"><b>Balance de Consumo:</b> en la noche lunar de 14 días terrestres, alternar mantas reflectivas con ciclos cortos de calor ahorra hasta un 40% de energía.</p></div>
+          <div className="glass rounded-2xl p-4"><p className="flex items-center gap-2 font-extrabold text-destructive"><TriangleAlert className="size-5 shrink-0" />¿Qué pasó?</p><p className="mt-2"><b>{cause}:</b> {detail}</p></div>
+          <div className="glass rounded-2xl p-4"><p className="flex items-center gap-2 font-extrabold text-secondary"><Lightbulb className="size-5 shrink-0" />Una pista para la próxima</p><p className="mt-2">Mira cuánto sube o baja cada recurso antes de elegir. ¡Intenta mantener las tres barras por encima del 10%!</p></div>
         </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <button onClick={onRetry} className="glass-button flex items-center gap-2 rounded-full px-8 py-3 text-lg font-bold"><RotateCcw className="size-5" /> VOLVER A INTENTAR</button>
-          <button onClick={onMenu} className="glass flex items-center gap-2 rounded-full px-8 py-3 text-lg font-bold"><Home className="size-5" /> MENÚ PRINCIPAL</button>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <button onClick={onRetry} className="glass-button flex w-full max-w-sm items-center justify-center gap-2 rounded-full px-6 py-3 text-lg font-bold"><RotateCcw className="size-5 shrink-0" /> Probar otra vez</button>
+          <button onClick={onMenu} className="glass flex w-full max-w-sm items-center justify-center gap-2 rounded-full px-6 py-3 text-lg font-bold"><Home className="size-5 shrink-0" /> Volver al inicio</button>
         </div>
       </section>
       <Footer />

@@ -1,0 +1,1 @@
+﻿export const solarStormBg = "https://lh3.googleusercontent.com/aida-public/AB6AXuBDJDiSmOF_Gr7ZgUrM5Xli-CwgsWufwz0KGCZ0yjaj7HguQLD1gcZaBOVM-L_EijvoZEwKFh4TJ37Q6v30Y8bkhKvGWZoU5nd5MsAX8JFvzAeoApom-a-aYVzpyr24ta_SNvH1zHLVYwu_4vpWqI3VbnJj6WOQFpH6WVSQNofKp15b99Qe4Q2WBuqLjvC0d3091NikBn2Lyezjyw-IRfxiV8paHzgGtR9a5nIGC06j";
