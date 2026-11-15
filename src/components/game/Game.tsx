@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
+import solarPanelVideo from "@/assets/paneles-solares.mp4";
 import menuBg from "@/assets/men_principal_0.jpg.asset.json";
 import menuKid from "@/assets/men_principal_1.jpg.asset.json";
 import questPanels from "@/assets/quest-01-paneles.png";
@@ -379,7 +380,7 @@ export function Game() {
       return (
         <main className="lunar-game flex min-h-dvh items-center justify-center bg-black" aria-label="Recorriendo el corredor lunar" aria-busy="true">
           <video
-            src={corridorVideo}
+            src={phase.target.location === 0 ? solarPanelVideo : corridorVideo}
             autoPlay
             muted
             playsInline
