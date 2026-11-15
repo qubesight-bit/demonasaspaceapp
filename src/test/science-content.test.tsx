@@ -19,7 +19,7 @@ describe("scientific mission content", () => {
   it("shows the simplified-science and lunar-communications guidance", () => {
     render(<Game />);
 
-    fireEvent.click(screen.getByRole("button", { name: /La ciencia/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Logros/i })[0]!);
 
     expect(screen.getByRole("heading", { name: /La ciencia detrás de la misión/i })).toBeInTheDocument();
     expect(screen.getByText(/indicadores simples de este entrenamiento/i)).toBeInTheDocument();

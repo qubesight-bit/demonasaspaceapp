@@ -7,10 +7,10 @@ import { LOCATIONS, INITIAL_NAVIGATION, canVisit, navigationReducer, type Locati
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const videoLabel = "Transición entre ubicaciones de la base lunar";
-const click = (name: RegExp | string) => fireEvent.click(screen.getByRole("button", { name }));
+const click = (name: RegExp | string) => fireEvent.click(screen.getAllByRole("button", { name })[0]!);
 const video = () => screen.getByLabelText(videoLabel) as HTMLVideoElement;
 const resources = () => within(screen.getByLabelText("Recursos de la base")).getAllByText(/%$/).map(node => node.textContent);
-function start() { render(<Game />); click(/A JUGAR/i); }
+function start() { render(<Game />); click(/Comenzar juego/i); }
 function completeMission(choice: string) {
   click(/Iniciar MISIÓN/i);
   click(new RegExp(choice, "i"));

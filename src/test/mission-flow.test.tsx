@@ -26,7 +26,7 @@ describe("four mission report flow", () => {
     { choice: "Ir al refugio", ending: "¡MISIÓN CUMPLIDA!", energy: "80%", food: "55%", safety: "65%" },
   ])("reports solar choice $choice before showing $ending", ({ choice, ending, energy, food, safety }) => {
     render(<Game />);
-    fireEvent.click(screen.getByRole("button", { name: /A JUGAR/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Comenzar juego/i })[0]!);
     for (const [index, title] of ["Limpiar los paneles", "Cubrir las plantas", "Ir al refugio"].entries()) {
       choose(title);
       next();
@@ -51,7 +51,7 @@ describe("four mission report flow", () => {
 
   it("stops after the third report when energy is depleted", () => {
     render(<Game />);
-    fireEvent.click(screen.getByRole("button", { name: /A JUGAR/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /Comenzar juego/i })[0]!);
     for (const [index, title] of ["Ahorrar energía", "Encender la calefacción", "Reforzar las barreras"].entries()) {
       choose(title);
       next();

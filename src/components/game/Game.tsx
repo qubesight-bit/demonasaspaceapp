@@ -1,10 +1,9 @@
 import { useEffect, useReducer, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ArrowRight, BookOpen, ChevronLeft, CircleHelp, LockKeyhole, MousePointerClick, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronLeft, CircleHelp, LockKeyhole, MousePointerClick, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
 import solarPanelVideo from "@/assets/paneles-solares.mp4";
-import menuBg from "@/assets/men_principal_0.jpg.asset.json";
-import menuKid from "@/assets/men_principal_1.jpg.asset.json";
+import menuArt from "@/assets/menu-cohete-costa-rica.png.asset.json";
 import questPanels from "@/assets/quest-01-paneles.png";
 import questGreenhouse from "@/assets/quest-02-invernadero.png";
 import questMeteorites from "@/assets/quest-03-meteoritos.png";
@@ -97,61 +96,29 @@ function Effects({ c }: { c: Choice }) {
   );
 }
 
-function CostaRicaFlag() {
-  return (
-    <svg className="costa-rica-flag" viewBox="0 0 30 20" role="img" aria-label="Bandera de Costa Rica">
-      <rect width="30" height="3" y="0" fill="#002b7f" />
-      <rect width="30" height="3" y="3" fill="#ffffff" />
-      <rect width="30" height="8" y="6" fill="#ce1126" />
-      <rect width="30" height="3" y="14" fill="#ffffff" />
-      <rect width="30" height="3" y="17" fill="#002b7f" />
-    </svg>
-  );
-}
-
 function Menu({ onStart }: { onStart: () => void }) {
   const [panel, setPanel] = useState<null | "guide" | "science" | "credits">(null);
   return (
-    <Screen bg={menuBg.url} dim={false}>
-      <header className="flex items-center justify-between">
-        <div className="glass flex items-center gap-3 rounded-full px-5 py-2">
-          <Rocket className="size-5 shrink-0 text-primary" />
-          <div className="leading-tight">
-            <p className="text-xs font-extrabold uppercase tracking-widest text-primary">NASA Space Apps 2026</p>
-            <p className="text-sm font-bold">Equipo PopTART-Cats</p>
-          </div>
+    <main className="lunar-game relative isolate flex min-h-dvh flex-col items-center bg-background sm:justify-center">
+      <h1 className="sr-only">¡Misión Base Lunar!</h1>
+      <div className="menu-art">
+        <img src={menuArt.url} alt="Portada de Misión Base Lunar: un cohete con los colores de Costa Rica despega hacia la Luna desde una colina verde bajo un cielo estrellado." />
+        {/* Las zonas interactivas se alinean con los botones dibujados en la imagen (1680×944). */}
+        <button onClick={onStart} className="menu-hotspot" style={{ left: "33%", top: "63.5%", width: "33.5%", height: "12.5%" }} aria-label="Comenzar juego" />
+        <button onClick={() => setPanel("guide")} className="menu-hotspot" style={{ left: "24.4%", top: "78.3%", width: "15.3%", height: "7.8%" }} aria-label="Abrir la Guía Lunar" />
+        <button onClick={() => setPanel("science")} className="menu-hotspot" style={{ left: "43.2%", top: "78.3%", width: "13.7%", height: "7.8%" }} aria-label="Abrir Logros" />
+        <button onClick={() => setPanel("credits")} className="menu-hotspot" style={{ left: "60.1%", top: "78.3%", width: "15.3%", height: "7.8%" }} aria-label="Abrir Créditos" />
+      </div>
+      <div className="flex w-full max-w-md flex-col gap-3 p-4 sm:hidden">
+        <button onClick={onStart} className="glass-button flex items-center justify-center gap-3 rounded-full px-5 py-4 text-xl font-bold">
+          <Play className="size-6 shrink-0 fill-current" /> Comenzar juego
+        </button>
+        <div className="grid grid-cols-3 gap-2">
+          <MenuTile icon={BookOpen} label="Guía Lunar" onClick={() => setPanel("guide")} />
+          <MenuTile icon={Medal} label="Logros" onClick={() => setPanel("science")} />
+          <MenuTile icon={Users} label="Créditos" onClick={() => setPanel("credits")} />
         </div>
-        <div className="costa-rica-badge glass" aria-label="Proyecto creado en Costa Rica">
-          <CostaRicaFlag />
-          <span>Costa Rica</span>
-        </div>
-      </header>
-      <section className="my-auto flex min-w-0 flex-col items-center py-4 text-center animate-rise">
-        <span className="glass rounded-full px-5 py-1.5 text-sm font-bold">¡Una aventura en la Luna!</span>
-        <h1 className="text-glow mt-4 text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">¡MISIÓN BASE LUNAR!</h1>
-        <p className="costa-rica-welcome">¡Pura vida, astronauta! Desde Costa Rica, comienza tu aventura lunar.</p>
-        <p className="glass mt-4 rounded-2xl px-5 py-2 font-bold sm:text-lg">¡Cuida la energía, la comida y la seguridad de tu base!</p>
-        <div className="mt-6 flex w-full min-w-0 flex-col items-center gap-6 md:flex-row md:justify-center">
-          <div className="flex w-full max-w-64 shrink-0 flex-col items-center gap-4 sm:max-w-72">
-            <span className="glass rounded-2xl px-4 py-2 text-base font-bold">¡Hola! ¿Listo para explorar?</span>
-            <img src={menuKid.url} alt="Astronauta saludando" className="animate-float h-auto w-full rounded-2xl border border-primary/50 object-contain shadow-2xl" />
-          </div>
-          <div className="flex w-full max-w-md flex-col gap-3">
-            <button onClick={onStart} className="glass-button flex items-center justify-center gap-3 rounded-full px-5 py-4 text-xl font-bold sm:text-2xl">
-              <Play className="size-6 shrink-0 fill-current" /> ¡A JUGAR! <Rocket className="size-6 shrink-0" />
-            </button>
-            <div className="grid grid-cols-2 gap-3">
-              <MenuTile icon={BookOpen} label="Cómo jugar" onClick={() => setPanel("guide")} />
-              <MenuTile icon={Lightbulb} label="La ciencia" onClick={() => setPanel("science")} />
-              <MenuTile icon={Users} label="El equipo" onClick={() => setPanel("credits")} />
-            </div>
-          </div>
-        </div>
-      </section>
-      <footer className="flex flex-wrap items-center justify-between gap-2 text-sm font-bold">
-        <span className="glass rounded-2xl px-4 py-2">🎨 Arte e idea: Maggie • 💻 Código: Ernesto • 🔬 Ciencia: Emmanuel</span>
-        <span className="text-muted-foreground">Hecho en Costa Rica por PopTART-Cats • Versión 2.0</span>
-      </footer>
+      </div>
       {panel && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-scrim p-4" onClick={() => setPanel(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="menu-panel-title" className="glass animate-rise relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl bg-popover p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
@@ -204,13 +171,13 @@ function Menu({ onStart }: { onStart: () => void }) {
           </div>
         </div>
       )}
-    </Screen>
+    </main>
   );
 }
 
 function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="glass flex items-center gap-2 rounded-2xl px-4 py-3 font-bold transition hover:-translate-y-0.5">
+    <button onClick={onClick} className="glass flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 text-center text-sm font-bold transition hover:-translate-y-0.5">
       <Icon className="size-5 shrink-0 text-primary" /> {label}
     </button>
   );

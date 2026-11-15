@@ -155,6 +155,23 @@
   .costa-rica-welcome { border-radius: 1rem; }
 }
 
+/* Menú principal: la imagen de portada (1680×944) es el fondo; los botones HTML reales
+   se superponen a los botones dibujados sin duplicar textos. */
+.menu-art { position: relative; width: 100%; aspect-ratio: 1680 / 944; container-type: inline-size; }
+.menu-art img { display: block; width: 100%; height: auto; }
+.menu-hotspot { display: none; }
+@media (min-width: 640px) {
+  .menu-art { width: min(100%, calc(100dvh * 1680 / 944)); }
+  .menu-art img { position: absolute; inset: 0; height: 100%; object-fit: contain; }
+  .menu-hotspot {
+    display: block; position: absolute; border-radius: 9999px;
+    background: transparent; border: 3px solid transparent; cursor: pointer;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .menu-hotspot:hover { background: rgb(255 255 255 / .14); border-color: #ffe899cc; }
+  .menu-hotspot:focus-visible { outline: 3px solid #ffe899; outline-offset: 2px; background: rgb(255 255 255 / .14); }
+}
+
 .solar-header {
   background: linear-gradient(180deg, #ffffff35, #103464cf);
   border: 1px solid #ffffff70;
