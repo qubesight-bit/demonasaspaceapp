@@ -9,6 +9,10 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// The existing Lovable asset proxy needs this project's upstream host in local dev.
+// Asset manifests remain unchanged and continue to identify the original images.
+process.env["LOVABLE_PREVIEW_HOST"] = "id-preview--8ce3fdf3-662b-4632-841c-3894d8e316ce.lovable.app";
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).

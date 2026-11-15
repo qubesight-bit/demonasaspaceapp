@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useReducer, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
@@ -14,7 +14,7 @@ import winMaggie from "@/assets/misi_n_cumplida_victoria_1.jpg.asset.json";
 import loseBg from "@/assets/misi_n_interrumpida_derrota_0.jpg.asset.json";
 
 import { solarStormBg } from "@/assets/solar-storm";
-import { DIRECTIONS, LOCATIONS, INITIAL_POSE, advance, destination, turn, type Pose } from "@/lib/exploration";
+import { LOCATIONS, INITIAL_NAVIGATION, canVisit, navigationReducer, type LocationId, type NavigationState } from "@/lib/exploration";
 
 const QUEST_ART = [
   { bg: questPanels, alt: "Maggie y su gato junto a los paneles solares cubiertos de polvo en la base lunar.", icons: ["⚡", "💡"] },
@@ -26,7 +26,6 @@ const QUEST_ART = [
 type Phase =
   | { kind: "menu" }
   | { kind: "explore"; index: number }
-  | { kind: "travel"; index: number; target: Pose }
   | { kind: "mission"; index: number }
   | { kind: "report"; index: number; choice: Choice; before: Resources }
   | { kind: "win" }
@@ -179,44 +178,113 @@ function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: s
   );
 }
 
-function ExplorationScreen({ index, r, pose, onMove, onAdvance, onMission }: {
-  index: number; r: Resources; pose: Pose; onMove: (pose: Pose) => void; onAdvance: () => void; onMission: () => void;
+const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const subscribeMotion = (notify: () => void) => {
+  const media = window.matchMedia(MOTION_QUERY);
+  media.addEventListener("change", notify);
+  return () => media.removeEventListener("change", notify);
+};
+const motionSnapshot = () => window.matchMedia(MOTION_QUERY).matches;
+const serverMotionSnapshot = () => false;
+
+function ExplorationScreen({ index, r, navigation, onVisit, onBack, onArrive, onMission }: {
+  index: number; r: Resources; navigation: NavigationState;
+  onVisit: (target: LocationId) => void; onBack: () => void;
+  onArrive: (target: LocationId) => void; onMission: () => void;
 }) {
-  const next = destination(pose);
-  const location = LOCATIONS[pose.location];
-  const art = QUEST_ART[next ?? pose.location]!;
-  const available = pose.location === index;
+  const { location: locationId, pending, history, arrived } = navigation;
+  const location = LOCATIONS[locationId];
+  const art = QUEST_ART[locationId]!;
+  const available = locationId === index;
+  const previous = history.at(-1);
+  const canGoBack = previous !== undefined && canVisit(locationId, previous, index);
+  const title = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (arrived && !pending) title.current?.focus({ preventScroll: true });
+  }, [locationId, arrived, pending]);
+
   return (
     <main className="lunar-game exploration-scene">
-      <header className="solar-header m-3 flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-extrabold text-energy">Base Lunar Alfa • Exploración</p>
-          <h1 className="text-xl font-bold">Explorá la base lunar</h1>
+      <header className="exploration-header">
+        <div>
+          <p className="font-extrabold text-energy">Base Lunar Alfa</p>
+          <h1 className="text-2xl font-bold">¡Explorá y cuidá tu base!</h1>
+          <p>Misiones completadas: {index} de {MISSIONS.length}</p>
         </div>
-        <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
+        <Hud r={r} />
       </header>
-      <section className="exploration-view" aria-label="Vista de exploración">
-        <img src={art.bg} alt={art.alt} className="exploration-art" />
-        <div className="exploration-caption rounded-2xl p-3 sm:p-4" role="status">
-          <h2 className="text-xl font-bold">Estás en: {location.name}</h2>
-          <p className="font-bold">Mirando al {DIRECTIONS[pose.heading]}</p>
-          <p>{next === null ? "No hay paso en esta dirección. Girá para buscar una salida." : `Al frente: ${LOCATIONS[next].name}`}</p>
-        </div>
-      </section>
-      <section className="mx-auto flex w-full max-w-4xl flex-col gap-3 p-3 sm:p-4" aria-label="Controles de exploración">
-        <p className="text-center font-bold">Objetivo: {MISSIONS[index]!.code} — {LOCATIONS[index]!.name}</p>
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          <button onClick={() => onMove(turn(pose, "left"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↶</span>Girar a la izquierda</button>
-          <button onClick={onAdvance} disabled={next === null} className="glass-button exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↑</span>Avanzar</button>
-          <button onClick={() => onMove(turn(pose, "right"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↷</span>Girar a la derecha</button>
-        </div>
-        {available ? (
-          <button onClick={onMission} className="glass-button rounded-2xl p-4 text-lg font-bold">Iniciar {MISSIONS[index]!.code}: {MISSIONS[index]!.title}</button>
-        ) : (
-          <p className="glass rounded-2xl p-3 text-center">{pose.location < index ? "Ya completaste la misión de esta zona." : `Primero completá ${MISSIONS[index]!.code}.`} Seguí el objetivo para continuar.</p>
-        )}
-        <p className="text-center text-sm text-muted-foreground">Girá para elegir un camino y avanzá para cambiar de zona. Explorar no consume recursos.</p>
-      </section>
+      <ol className="exploration-progress" aria-label="Progreso de la aventura">
+        {LOCATIONS.map((place, id) => (
+          <li key={place.name} aria-current={id === index ? "step" : undefined}>
+            <span aria-hidden="true">{id < index ? "✓" : id + 1}</span>
+            <span>{place.name}<small>{id < index ? "Completada" : id === index ? "Tu misión" : "Próximamente"}</small></span>
+          </li>
+        ))}
+      </ol>
+      <div className="exploration-layout">
+        <section className="exploration-location" aria-labelledby="location-title">
+          <div className="exploration-view" aria-label="Escenario de la base lunar" aria-busy={pending !== null}>
+            <img src={art.bg} alt={art.alt} className="exploration-art" />
+            {pending && (
+              <video
+                key={pending.target}
+                src={pending.target === 0 ? solarPanelVideo : corridorVideo}
+                autoPlay muted playsInline disablePictureInPicture disableRemotePlayback
+                controlsList="nofullscreen noremoteplayback"
+                className="exploration-video"
+                aria-label="Transición entre ubicaciones de la base lunar"
+                onEnded={() => onArrive(pending.target)}
+              />
+            )}
+          </div>
+          <div className="exploration-caption">
+            <h2 id="location-title" ref={title} tabIndex={-1} className="text-xl font-bold">Estás en: {location.name}</h2>
+            <p>{location.description}</p>
+          </div>
+        </section>
+        <section className="exploration-controls" aria-label="Destinos y misiones">
+          <p className="exploration-status" role="status" aria-live="polite" aria-atomic="true">
+            {pending ? LOCATIONS[pending.target].travelMessage : arrived ? "¡Llegaste! Elegí qué hacemos ahora." : index === 0 ? "¡Bienvenido! Empezá tu primera misión." : "¡Elegí un destino para seguir explorando!"}
+          </p>
+          <div className="exploration-mission">
+            <p className="font-bold">Tu objetivo: {LOCATIONS[index]!.name}</p>
+            {available ? (
+              <button onClick={onMission} disabled={pending !== null} className="exploration-mission-button">
+                Iniciar {MISSIONS[index]!.code}: {MISSIONS[index]!.title}
+              </button>
+            ) : (
+              <p>Ya completaste la misión de esta zona. Viajá a {LOCATIONS[index]!.name} para seguir.</p>
+            )}
+          </div>
+          <nav aria-label="Destinos conectados" className="exploration-destinations">
+            {location.connections.map(target => {
+              const place = LOCATIONS[target];
+              const locked = !canVisit(locationId, target, index);
+              return (
+                <div key={target} className="exploration-destination">
+                  <button
+                    onClick={() => onVisit(target)}
+                    disabled={locked || pending !== null}
+                    aria-describedby={`destination-${target}-hint`}
+                    className="exploration-destination-button"
+                  >
+                    <span aria-hidden="true">{place.emoji}</span> {place.destination}
+                    {locked && <span className="exploration-lock">Bloqueado</span>}
+                  </button>
+                  <p id={`destination-${target}-hint`}>
+                    {locked ? `Completá la misión ${target} en ${LOCATIONS[target - 1]!.name} para desbloquear este destino.` : pending ? "Esperá a llegar o saltá la animación." : "Camino disponible. Explorar no consume recursos."}
+                  </p>
+                </div>
+              );
+            })}
+          </nav>
+          <div className="exploration-travel-actions">
+            <button onClick={onBack} disabled={!canGoBack || pending !== null} aria-describedby="back-hint">← Volver</button>
+            <button onClick={() => { if (pending) onArrive(pending.target); }} disabled={pending === null}>Saltar animación</button>
+          </div>
+          <p id="back-hint" className="text-sm">{canGoBack ? `Volver a ${LOCATIONS[previous].name}.` : "Todavía no hay una ubicación anterior."}</p>
+        </section>
+      </div>
       <Footer />
     </main>
   );
@@ -360,10 +428,16 @@ function Lose({ failed, r, onRetry, onMenu }: { failed: ResourceKey; r: Resource
 export function Game() {
   const [phase, setPhase] = useState<Phase>({ kind: "menu" });
   const [r, setR] = useState<Resources>(START);
-  const [pose, setPose] = useState<Pose>(INITIAL_POSE);
+  const [navigation, dispatchNavigation] = useReducer(navigationReducer, INITIAL_NAVIGATION);
+  const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, serverMotionSnapshot);
+  useEffect(() => {
+    if (reducedMotion && navigation.pending) {
+      dispatchNavigation({ type: "arrive", target: navigation.pending.target });
+    }
+  }, [reducedMotion, navigation.pending]);
   const start = () => {
     setR(START);
-    setPose(INITIAL_POSE);
+    dispatchNavigation({ type: "reset" });
     setPhase({ kind: "explore", index: 0 });
   };
 
@@ -371,28 +445,13 @@ export function Game() {
     case "menu":
       return <Menu onStart={start} />;
     case "explore":
-      return <ExplorationScreen index={phase.index} r={r} pose={pose} onMove={setPose} onAdvance={() => {
-        if (destination(pose) !== null) setPhase({ kind: "travel", index: phase.index, target: advance(pose) });
-      }} onMission={() => {
-        if (pose.location === phase.index) setPhase({ kind: "mission", index: phase.index });
-      }} />;
-    case "travel":
-      return (
-        <main className="lunar-game flex min-h-dvh items-center justify-center bg-black" aria-label="Recorriendo el corredor lunar" aria-busy="true">
-          <video
-            src={phase.target.location === 0 ? solarPanelVideo : corridorVideo}
-            autoPlay
-            muted
-            playsInline
-            className="h-dvh w-full object-contain"
-            aria-label="Transición entre ubicaciones de la base lunar"
-            onEnded={() => {
-              setPose(phase.target);
-              setPhase({ kind: "explore", index: phase.index });
-            }}
-          />
-        </main>
-      );
+      return <ExplorationScreen index={phase.index} r={r} navigation={navigation}
+        onVisit={target => dispatchNavigation({ type: "visit", target, missionIndex: phase.index, animate: !reducedMotion })}
+        onBack={() => dispatchNavigation({ type: "back", missionIndex: phase.index, animate: !reducedMotion })}
+        onArrive={target => dispatchNavigation({ type: "arrive", target })}
+        onMission={() => {
+          if (!navigation.pending && navigation.location === phase.index) setPhase({ kind: "mission", index: phase.index });
+        }} />;
     case "mission":
       return <MissionScreen index={phase.index} r={r} onExplore={() => setPhase({ kind: "explore", index: phase.index })} onChoose={(c) => { const next = applyChoice(r, c); setR(next); setPhase({ kind: "report", index: phase.index, choice: c, before: r }); }} />;
     case "report":

@@ -1,133 +1,198 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
 import solarPanelVideo from "@/assets/paneles-solares.mp4";
 import { Game } from "@/components/game/Game";
-import { INITIAL_POSE, advance, destination, turn, type Pose } from "@/lib/exploration";
+import { LOCATIONS, INITIAL_NAVIGATION, canVisit, navigationReducer, type LocationId } from "@/lib/exploration";
 
-afterEach(cleanup);
-
-function click(name: RegExp | string) {
-  fireEvent.click(screen.getByRole("button", { name }));
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+const videoLabel = "Transición entre ubicaciones de la base lunar";
+const click = (name: RegExp | string) => fireEvent.click(screen.getByRole("button", { name }));
+const video = () => screen.getByLabelText(videoLabel) as HTMLVideoElement;
+const resources = () => within(screen.getByLabelText("Recursos de la base")).getAllByText(/%$/).map(node => node.textContent);
+function start() { render(<Game />); click(/A JUGAR/i); }
+function completeMission(choice: string) {
+  click(/Iniciar MISIÓN/i);
+  click(new RegExp(choice, "i"));
+  click("Continuar");
+}
+function visit(target: LocationId, skip = false) {
+  click(LOCATIONS[target].destination);
+  if (skip) click("Saltar animación");
+  else fireEvent.ended(video());
+}
+function reachLastMission() {
+  completeMission("Limpiar los paneles"); visit(1);
+  completeMission("Cubrir las plantas"); visit(2);
+  completeMission("Ir al refugio"); visit(3);
 }
 
-function start() {
-  render(<Game />);
-  click(/A JUGAR/i);
-}
-
-describe("lunar exploration", () => {
-  it.each([
-    { side: "izquierda", locations: ["Invernadero", "Barreras de la base", "Observatorio solar", "Campo de paneles"], initialTurn: false },
-    { side: "derecha", locations: ["Observatorio solar", "Barreras de la base", "Invernadero", "Campo de paneles"], initialTurn: true },
-  ])("selects the destination video for every connection going $side", ({ side, locations, initialTurn }) => {
-    start();
-    expect(screen.queryByLabelText("Transición entre ubicaciones de la base lunar")).not.toBeInTheDocument();
-    if (initialTurn) click(/Girar a la izquierda/i);
-    for (const [index, location] of locations.entries()) {
-      if (index > 0) click(new RegExp(`Girar a la ${side}`, "i"));
-      click("Avanzar");
-      const video = screen.getByLabelText("Transición entre ubicaciones de la base lunar") as HTMLVideoElement;
-      expect(video).toHaveAttribute("src", location === "Campo de paneles" ? solarPanelVideo : corridorVideo);
-      expect(video.autoplay).toBe(true);
-      expect(video.muted).toBe(true);
-      expect(video.playsInline).toBe(true);
-      expect(video.controls).toBe(false);
-      expect(video.loop).toBe(false);
-      expect(screen.queryByRole("button")).not.toBeInTheDocument();
-      fireEvent.ended(video);
-      expect(screen.getByRole("heading", { name: `Estás en: ${location}` })).toBeInTheDocument();
-      for (const value of ["35%", "70%", "80%"]) expect(screen.getByText(value)).toBeInTheDocument();
-      if (location !== "Campo de paneles") {
-        expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
-        expect(screen.getByText(/Primero completá MISIÓN 01/)).toBeInTheDocument();
+describe("destination navigation rules", () => {
+  it("allows only connected locations unlocked by completed missions", () => {
+    const edges = [[1, 3], [0, 2], [1, 3], [0, 2]];
+    for (const from of [0, 1, 2, 3] as const) {
+      for (const target of [0, 1, 2, 3] as const) {
+        for (let progress = 0; progress < 4; progress++) {
+          expect(canVisit(from, target, progress)).toBe(edges[from]!.includes(target) && target <= progress);
+        }
       }
     }
-    expect(screen.getByRole("button", { name: /Iniciar MISIÓN 01/i })).toBeInTheDocument();
   });
 
-  it("waits for the video, prevents repeated input and leaves missions and resources unchanged", () => {
+  it("rejects blocked and disconnected destinations, including during a pending move", () => {
+    expect(navigationReducer(INITIAL_NAVIGATION, { type: "visit", target: 1, missionIndex: 0, animate: true })).toBe(INITIAL_NAVIGATION);
+    expect(navigationReducer(INITIAL_NAVIGATION, { type: "visit", target: 2, missionIndex: 3, animate: true })).toBe(INITIAL_NAVIGATION);
+    const pending = navigationReducer(INITIAL_NAVIGATION, { type: "visit", target: 1, missionIndex: 3, animate: true });
+    expect(pending.location).toBe(0);
+    expect(navigationReducer(pending, { type: "visit", target: 3, missionIndex: 3, animate: true })).toBe(pending);
+    expect(navigationReducer(pending, { type: "back", missionIndex: 3, animate: true })).toBe(pending);
+    expect(navigationReducer(pending, { type: "arrive", target: 3 })).toBe(pending);
+    const arrived = navigationReducer(pending, { type: "arrive", target: 1 });
+    expect(arrived.location).toBe(1);
+    expect(arrived.history).toEqual([0]);
+    expect(navigationReducer(arrived, { type: "arrive", target: 1 })).toBe(arrived);
+  });
+
+  it("pops valid history on back and resets navigation for a new adventure", () => {
+    const arrived = navigationReducer(INITIAL_NAVIGATION, { type: "visit", target: 1, missionIndex: 1, animate: false });
+    const returned = navigationReducer(arrived, { type: "back", missionIndex: 1, animate: false });
+    expect(returned.location).toBe(0);
+    expect(returned.history).toEqual([]);
+    expect(navigationReducer(returned, { type: "back", missionIndex: 1, animate: true })).toBe(returned);
+    expect(navigationReducer(arrived, { type: "reset" })).toEqual(INITIAL_NAVIGATION);
+  });
+});
+
+describe("child friendly exploration", () => {
+  it("shows the current scene, resources, progress and explains locked connected destinations", () => {
     start();
-    const advanceButton = screen.getByRole("button", { name: "Avanzar" });
-    fireEvent.click(advanceButton);
-    const video = screen.getByLabelText("Transición entre ubicaciones de la base lunar") as HTMLVideoElement;
-    expect(video.autoplay).toBe(true);
-    expect(video.muted).toBe(true);
-    expect(video.playsInline).toBe(true);
-    expect(video.controls).toBe(false);
-    expect(video.loop).toBe(false);
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /Estás en:/ })).not.toBeInTheDocument();
-    fireEvent.click(advanceButton);
-    fireEvent.ended(video);
-    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Primero completá MISIÓN 01/)).toBeInTheDocument();
-    for (const value of ["35%", "70%", "80%"]) expect(screen.getByText(value)).toBeInTheDocument();
-    const blockedButton = screen.getByRole("button", { name: "Avanzar" });
-    expect(blockedButton).toBeDisabled();
-    fireEvent.click(blockedButton);
-    expect(screen.queryByLabelText("Transición entre ubicaciones de la base lunar")).not.toBeInTheDocument();
-  });
-
-  it("turns in both directions, wraps around and respects walls", () => {
-    let pose = INITIAL_POSE;
-    for (let i = 0; i < 4; i++) pose = turn(pose, "right");
-    expect(pose).toEqual(INITIAL_POSE);
-    expect(turn(turn(pose, "left"), "right")).toEqual(pose);
-    const wall: Pose = { location: 0, heading: 2 };
-    expect(destination(wall)).toBeNull();
-    expect(advance(wall)).toEqual(wall);
-  });
-
-  it("connects all four locations and allows returning to the start", () => {
-    let pose = advance(INITIAL_POSE);
-    expect(pose.location).toBe(1);
-    pose = advance(turn(pose, "left"));
-    expect(pose.location).toBe(2);
-    pose = advance(turn(pose, "left"));
-    expect(pose.location).toBe(3);
-    pose = advance(turn(pose, "left"));
-    expect(pose.location).toBe(0);
-  });
-
-  it("blocks future missions and preserves resources while navigating", () => {
-    start();
-    click("Avanzar");
-    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
-    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/Primero completá MISIÓN 01/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Avanzar" })).toBeDisabled();
-    click(/Girar a la derecha/i);
-    click(/Girar a la derecha/i);
-    click("Avanzar");
-    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
     expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toBeInTheDocument();
-    for (const value of ["35%", "70%", "80%"]) expect(screen.getByText(value)).toBeInTheDocument();
-    click(/Iniciar MISIÓN 01/i);
-    expect(screen.getByRole("heading", { name: /El polvo lunar/ })).toBeInTheDocument();
-    click(/Volver a explorar/i);
-    expect(screen.getByText("Mirando al Oeste")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Iniciar MISIÓN 01/i })).toBeInTheDocument();
-    expect(screen.getByText("35%")).toBeInTheDocument();
+    expect(screen.getByText(/Estos paneles usan la luz/)).toBeInTheDocument();
+    expect(screen.getByText("Misiones completadas: 0 de 4")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Progreso de la aventura" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Girar|Avanzar/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: LOCATIONS[2].destination })).not.toBeInTheDocument();
+    const locked = screen.getByRole("button", { name: /Ir al invernadero/ });
+    expect(locked).toBeDisabled();
+    expect(locked).toHaveAccessibleDescription(/Completá la misión 1 en Campo de paneles/);
+    fireEvent.click(locked);
+    expect(screen.queryByLabelText(videoLabel)).not.toBeInTheDocument();
+    expect(resources()).toEqual(["35%", "70%", "80%"]);
+    expect(screen.getByRole("button", { name: "← Volver" })).toBeDisabled();
   });
 
-  it("requires reaching the next location and prevents replaying a completed mission", () => {
-    start();
-    click(/Iniciar MISIÓN 01/i);
-    click(/Limpiar los paneles/i);
-    expect(screen.getByRole("heading", { name: "¡Mira qué pasó!" })).toBeInTheDocument();
-    click(/Continuar/i);
+  it("plays inline inside the scene while keeping controls visible and blocking conflicting actions", () => {
+    start(); completeMission("Limpiar los paneles");
+    const before = resources();
+    click(LOCATIONS[1].destination);
+    const playing = video();
+    expect(playing).toHaveAttribute("src", corridorVideo);
+    expect(playing.autoplay).toBe(true);
+    expect(playing.muted).toBe(true);
+    expect(playing.playsInline).toBe(true);
+    expect(playing.controls).toBe(false);
+    expect(playing.loop).toBe(false);
+    expect(playing).toHaveAttribute("disablePictureInPicture");
+    expect(playing).toHaveAttribute("controlsList", "nofullscreen noremoteplayback");
+    expect(screen.getByLabelText("Escenario de la base lunar")).toContainElement(playing);
+    expect(screen.getByRole("status")).toHaveTextContent("¡Vamos al invernadero!");
     expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toBeInTheDocument();
-    expect(screen.getByText(/Ya completaste la misión/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/i })).not.toBeInTheDocument();
-    expect(screen.getByText("55%")).toBeInTheDocument();
-    click("Avanzar");
-    fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
-    expect(screen.getByRole("button", { name: /Iniciar MISIÓN 02/i })).toBeInTheDocument();
-    click(/Iniciar MISIÓN 02/i);
-    expect(screen.getByRole("heading", { name: /Las plantas se están congelando/ })).toBeInTheDocument();
-    expect(screen.getByText("55%")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: LOCATIONS[1].destination })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "← Volver" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Saltar animación" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: LOCATIONS[1].destination }));
+    fireEvent.ended(playing);
+    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toHaveFocus();
+    expect(screen.getByRole("status")).toHaveTextContent("¡Llegaste!");
+    expect(resources()).toEqual(before);
+    expect(screen.getByRole("button", { name: /Iniciar MISIÓN 02/ })).toBeEnabled();
+  });
+
+  it("skips exactly one move and returns with the solar video without replaying rewards", () => {
+    start(); completeMission("Limpiar los paneles");
+    const before = resources();
+    click(LOCATIONS[1].destination);
+    const oldVideo = video();
+    click("Saltar animación");
+    fireEvent.ended(oldVideo);
+    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Saltar animación" })).toBeDisabled();
+    click("← Volver");
+    expect(video()).toHaveAttribute("src", solarPanelVideo);
+    click("Saltar animación");
+    expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/Ya completaste la misión de esta zona/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "← Volver" })).toBeDisabled();
+    expect(resources()).toEqual(before);
+  });
+
+  it("disables starting a mission while returning to an earlier zone", () => {
+    start(); completeMission("Limpiar los paneles"); visit(1);
+    click("← Volver");
+    const mission = screen.getByRole("button", { name: /Iniciar MISIÓN 02/ });
+    expect(mission).toBeDisabled();
+    fireEvent.click(mission);
+    expect(screen.queryByRole("heading", { name: /Las plantas se están congelando/ })).not.toBeInTheDocument();
+    click("Saltar animación");
+    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/ })).not.toBeInTheDocument();
+  });
+
+  it("uses the destination video for all eight directed connections after unlocking the base", () => {
+    start(); reachLastMission();
+    const before = resources();
+    for (const target of [0, 1, 2, 3, 2, 1, 0, 3] as const) {
+      click(LOCATIONS[target].destination);
+      expect(video()).toHaveAttribute("src", target === 0 ? solarPanelVideo : corridorVideo);
+      fireEvent.ended(video());
+      expect(screen.getByRole("heading", { name: `Estás en: ${LOCATIONS[target].name}` })).toBeInTheDocument();
+      expect(resources()).toEqual(before);
+      expect(screen.queryByRole("button", { name: /Iniciar MISIÓN 0[123]/ })).not.toBeInTheDocument();
+    }
+    expect(screen.getByText("Misiones completadas: 3 de 4")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Iniciar MISIÓN 04/ })).toBeEnabled();
+  });
+
+  it("uses valid history for consecutive back moves and prevents inaccessible destinations", () => {
+    start(); reachLastMission();
+    const before = resources();
+    for (const target of [2, 1, 0] as const) {
+      click("← Volver"); click("Saltar animación");
+      expect(screen.getByRole("heading", { name: `Estás en: ${LOCATIONS[target].name}` })).toBeInTheDocument();
+      expect(resources()).toEqual(before);
+    }
+    expect(screen.getByRole("button", { name: "← Volver" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /Iniciar MISIÓN/ })).not.toBeInTheDocument();
+  });
+
+  it("honors reduced motion for both destination and back without creating a video", () => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    vi.spyOn(window, "matchMedia").mockReturnValue({ ...media, matches: true });
+    start(); completeMission("Limpiar los paneles");
+    const before = resources();
+    click(LOCATIONS[1].destination);
+    expect(screen.queryByLabelText(videoLabel)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toHaveFocus();
+    click("← Volver");
+    expect(screen.queryByLabelText(videoLabel)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toHaveFocus();
+    expect(resources()).toEqual(before);
+  });
+
+  it("finishes a pending move when reduced motion is enabled during playback", () => {
+    let reduce = false;
+    const listeners = new Set<() => void>();
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    vi.spyOn(window, "matchMedia").mockImplementation(() => ({
+      ...media, matches: reduce,
+      addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => { listeners.add(listener as () => void); },
+      removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => { listeners.delete(listener as () => void); },
+    }));
+    start(); completeMission("Limpiar los paneles");
+    click(LOCATIONS[1].destination);
+    expect(video()).toBeInTheDocument();
+    act(() => { reduce = true; listeners.forEach(listener => listener()); });
+    expect(screen.queryByLabelText(videoLabel)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Estás en: Invernadero" })).toHaveFocus();
   });
 });

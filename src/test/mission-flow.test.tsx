@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { Game } from "@/components/game/Game";
+import { LOCATIONS } from "@/lib/exploration";
 
 afterEach(cleanup);
 
@@ -15,9 +16,7 @@ function next() {
 }
 
 function moveToNext(index: number) {
-  // The four rooms form a square: east, north, then west.
-  if (index > 0) fireEvent.click(screen.getByRole("button", { name: /Girar a la izquierda/i }));
-  fireEvent.click(screen.getByRole("button", { name: "Avanzar" }));
+  fireEvent.click(screen.getByRole("button", { name: LOCATIONS[index + 1]!.destination }));
   fireEvent.ended(screen.getByLabelText("Transición entre ubicaciones de la base lunar"));
 }
 
@@ -45,7 +44,8 @@ describe("four mission report flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /Jugar de nuevo|Probar otra vez/ }));
     expect(screen.getByRole("heading", { name: "Estás en: Campo de paneles" })).toBeInTheDocument();
     expect(screen.getByText("35%")).toBeInTheDocument();
-    expect(screen.getByText("Mirando al Este")).toBeInTheDocument();
+    expect(screen.getByText("Misiones completadas: 0 de 4")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "← Volver" })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Iniciar MISIÓN 01/i })).toBeInTheDocument();
   });
 
