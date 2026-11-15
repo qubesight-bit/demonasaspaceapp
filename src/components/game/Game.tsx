@@ -12,6 +12,7 @@ import winMaggie from "@/assets/misi_n_cumplida_victoria_1.jpg.asset.json";
 import loseBg from "@/assets/misi_n_interrumpida_derrota_0.jpg.asset.json";
 
 import { solarStormBg } from "@/assets/solar-storm";
+import { DIRECTIONS, LOCATIONS, INITIAL_POSE, advance, destination, turn, type Pose } from "@/lib/exploration";
 
 const QUEST_ART = [
   { bg: questPanels, alt: "Maggie y su gato junto a los paneles solares cubiertos de polvo en la base lunar.", icons: ["⚡", "💡"] },
@@ -22,6 +23,7 @@ const QUEST_ART = [
 
 type Phase =
   | { kind: "menu" }
+  | { kind: "explore"; index: number }
   | { kind: "mission"; index: number }
   | { kind: "report"; index: number; choice: Choice; before: Resources }
   | { kind: "win" }
@@ -174,7 +176,50 @@ function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: s
   );
 }
 
-function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
+function ExplorationScreen({ index, r, pose, onMove, onMission }: {
+  index: number; r: Resources; pose: Pose; onMove: (pose: Pose) => void; onMission: () => void;
+}) {
+  const next = destination(pose);
+  const location = LOCATIONS[pose.location];
+  const art = QUEST_ART[next ?? pose.location]!;
+  const available = pose.location === index;
+  return (
+    <main className="lunar-game exploration-scene">
+      <header className="solar-header m-3 flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold text-energy">Base Lunar Alfa • Exploración</p>
+          <h1 className="text-xl font-bold">Explorá la base lunar</h1>
+        </div>
+        <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
+      </header>
+      <section className="exploration-view" aria-label="Vista de exploración">
+        <img src={art.bg} alt={art.alt} className="exploration-art" />
+        <div className="exploration-caption rounded-2xl p-3 sm:p-4" role="status">
+          <h2 className="text-xl font-bold">Estás en: {location.name}</h2>
+          <p className="font-bold">Mirando al {DIRECTIONS[pose.heading]}</p>
+          <p>{next === null ? "No hay paso en esta dirección. Girá para buscar una salida." : `Al frente: ${LOCATIONS[next].name}`}</p>
+        </div>
+      </section>
+      <section className="mx-auto flex w-full max-w-4xl flex-col gap-3 p-3 sm:p-4" aria-label="Controles de exploración">
+        <p className="text-center font-bold">Objetivo: {MISSIONS[index]!.code} — {LOCATIONS[index]!.name}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <button onClick={() => onMove(turn(pose, "left"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↶</span>Girar a la izquierda</button>
+          <button onClick={() => onMove(advance(pose))} disabled={next === null} className="glass-button exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↑</span>Avanzar</button>
+          <button onClick={() => onMove(turn(pose, "right"))} className="glass exploration-control rounded-2xl p-3 font-bold"><span aria-hidden="true" className="block text-3xl">↷</span>Girar a la derecha</button>
+        </div>
+        {available ? (
+          <button onClick={onMission} className="glass-button rounded-2xl p-4 text-lg font-bold">Iniciar {MISSIONS[index]!.code}: {MISSIONS[index]!.title}</button>
+        ) : (
+          <p className="glass rounded-2xl p-3 text-center">{pose.location < index ? "Ya completaste la misión de esta zona." : `Primero completá ${MISSIONS[index]!.code}.`} Seguí el objetivo para continuar.</p>
+        )}
+        <p className="text-center text-sm text-muted-foreground">Girá para elegir un camino y avanzá para cambiar de zona. Explorar no consume recursos.</p>
+      </section>
+      <Footer />
+    </main>
+  );
+}
+
+function MissionScreen({ index, r, onChoose, onExplore }: { index: number; r: Resources; onChoose: (c: Choice) => void; onExplore: () => void }) {
   const m = MISSIONS[index]!;
   const art = QUEST_ART[index]!;
   return (
@@ -185,6 +230,7 @@ function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; on
           <h1 className="text-xl font-bold">¡Misión Base Lunar! — <span className="text-energy">{m.title}</span></h1>
         </div>
         <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
+        <button onClick={onExplore} className="glass rounded-2xl px-4 py-2 font-bold">Volver a explorar</button>
       </header>
       <section className="solar-stage" aria-labelledby="quest-title">
         <img className="solar-backdrop" src={art.bg} alt={art.alt} />
@@ -311,19 +357,28 @@ function Lose({ failed, r, onRetry, onMenu }: { failed: ResourceKey; r: Resource
 export function Game() {
   const [phase, setPhase] = useState<Phase>({ kind: "menu" });
   const [r, setR] = useState<Resources>(START);
-  const start = () => { setR(START); setPhase({ kind: "mission", index: 0 }); };
+  const [pose, setPose] = useState<Pose>(INITIAL_POSE);
+  const start = () => {
+    setR(START);
+    setPose(INITIAL_POSE);
+    setPhase({ kind: "explore", index: 0 });
+  };
 
   switch (phase.kind) {
     case "menu":
       return <Menu onStart={start} />;
+    case "explore":
+      return <ExplorationScreen index={phase.index} r={r} pose={pose} onMove={setPose} onMission={() => {
+        if (pose.location === phase.index) setPhase({ kind: "mission", index: phase.index });
+      }} />;
     case "mission":
-      return <MissionScreen index={phase.index} r={r} onChoose={(c) => { const next = applyChoice(r, c); setR(next); setPhase({ kind: "report", index: phase.index, choice: c, before: r }); }} />;
+      return <MissionScreen index={phase.index} r={r} onExplore={() => setPhase({ kind: "explore", index: phase.index })} onChoose={(c) => { const next = applyChoice(r, c); setR(next); setPhase({ kind: "report", index: phase.index, choice: c, before: r }); }} />;
     case "report":
       return <Report index={phase.index} choice={phase.choice} before={phase.before} r={r} onNext={() => {
         const failed = failedResource(r);
         if (failed) setPhase({ kind: "lose", failed });
         else if (phase.index + 1 >= MISSIONS.length) setPhase({ kind: "win" });
-        else setPhase({ kind: "mission", index: phase.index + 1 });
+        else setPhase({ kind: "explore", index: phase.index + 1 });
       }} />;
     case "win":
       return <Win r={r} onRestart={start} />;
