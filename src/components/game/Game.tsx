@@ -3,11 +3,9 @@ import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateC
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import menuBg from "@/assets/men_principal_0.jpg.asset.json";
 import menuKid from "@/assets/men_principal_1.jpg.asset.json";
-import m1Bg from "@/assets/misi_n_01_energ_a_solar_0.jpg.asset.json";
-import m1Maggie from "@/assets/misi_n_01_energ_a_solar_1.jpg.asset.json";
-import m2Bg from "@/assets/pantalla_de_invernadero_remaster_0.jpg.asset.json";
-import m3Bg from "@/assets/misi_n_03_micrometeoritos_0.jpg.asset.json";
-import m3Maggie from "@/assets/misi_n_03_micrometeoritos_1.jpg.asset.json";
+import questPanels from "@/assets/quest-01-paneles.png";
+import questGreenhouse from "@/assets/quest-02-invernadero.png";
+import questMeteorites from "@/assets/quest-03-meteoritos.png";
 import reportBg from "@/assets/informe_de_decisi_n_0.jpg.asset.json";
 import winBg from "@/assets/misi_n_cumplida_victoria_0.jpg.asset.json";
 import winMaggie from "@/assets/misi_n_cumplida_victoria_1.jpg.asset.json";
@@ -15,10 +13,11 @@ import loseBg from "@/assets/misi_n_interrumpida_derrota_0.jpg.asset.json";
 
 import { solarStormBg } from "@/assets/solar-storm";
 
-const ART = [
-  { bg: m1Bg.url, maggie: m1Maggie.url },
-  { bg: m2Bg.url, maggie: m1Maggie.url },
-  { bg: m3Bg.url, maggie: m3Maggie.url },
+const QUEST_ART = [
+  { bg: questPanels, alt: "Maggie y su gato junto a los paneles solares cubiertos de polvo en la base lunar.", icons: ["⚡", "💡"] },
+  { bg: questGreenhouse, alt: "Maggie y su gato observan las plantas del invernadero helado de la base lunar.", icons: ["🌡️", "🌱"] },
+  { bg: questMeteorites, alt: "Maggie y su gato observan las pequeñas rocas del espacio desde el interior de la base lunar.", icons: ["🛡️", "🏠"] },
+  { bg: solarStormBg, alt: "Maggie y su gato observan la base lunar y la tormenta solar desde el interior de la estación.", icons: ["⚡", "🛡️"] },
 ];
 
 type Phase =
@@ -177,46 +176,7 @@ function MenuTile({ icon: Icon, label, onClick }: { icon: typeof Medal; label: s
 
 function MissionScreen({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
   const m = MISSIONS[index]!;
-  if (m.id === 4) return <SolarMission index={index} r={r} onChoose={onChoose} />;
-  const art = ART[index]!;
-  return (
-    <Screen bg={art.bg}>
-      <Hud r={r} sticky />
-      <span className="glass self-start rounded-2xl px-4 py-2 text-sm font-extrabold">{m.code} • {m.title}</span>
-      <section key={m.id} className="my-auto flex min-w-0 flex-col items-center gap-5 py-3 md:flex-row md:items-center animate-rise">
-        <figure className="w-48 max-w-full shrink-0 text-center sm:w-56 lg:w-64">
-          <img src={art.maggie} alt="Maggie, la astronauta" className="h-auto max-h-72 w-full rounded-3xl border-4 border-primary/60 bg-background/20 object-contain shadow-2xl" />
-          <figcaption className="mt-2 text-sm font-extrabold">Maggie, tu compañera de misión</figcaption>
-        </figure>
-        <div className="glass w-full min-w-0 flex-1 rounded-3xl p-5 sm:p-6">
-          <p className="flex flex-wrap items-center gap-3 text-sm font-extrabold">
-            <span className="inline-flex items-center gap-2 rounded-2xl bg-destructive px-3 py-2 text-destructive-foreground"><TriangleAlert className="size-4 shrink-0" />{m.alert}</span>
-            <span className="text-muted-foreground">{m.sensor}</span>
-          </p>
-          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">{m.headline}</h2>
-          <p className="mt-3 whitespace-pre-line text-lg leading-relaxed">{m.body}</p>
-          <p className="mt-3 text-lg font-bold">¿Qué hacemos?</p>
-        </div>
-      </section>
-      <div className="grid gap-4 md:grid-cols-2">
-        {m.choices.map((c) => (
-          <button key={c.id} onClick={() => onChoose(c)} className="glass group flex min-w-0 items-center gap-3 rounded-3xl p-5 text-left transition hover:-translate-y-1 hover:border-primary">
-            <div className="min-w-0 flex-1">
-              <p className="text-xl font-bold">{c.title}</p>
-              <p className="mb-3 mt-1 text-base text-muted-foreground">{c.subtitle}</p>
-              <Effects c={c} />
-            </div>
-            <ArrowRight className="size-6 shrink-0 text-primary transition group-hover:translate-x-1" />
-          </button>
-        ))}
-      </div>
-      <Footer />
-    </Screen>
-  );
-}
-
-function SolarMission({ index, r, onChoose }: { index: number; r: Resources; onChoose: (c: Choice) => void }) {
-  const m = MISSIONS[index]!;
+  const art = QUEST_ART[index]!;
   return (
     <main className="lunar-game solar-scene">
       <header className="solar-header flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
@@ -226,19 +186,20 @@ function SolarMission({ index, r, onChoose }: { index: number; r: Resources; onC
         </div>
         <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
       </header>
-      <section className="solar-stage" aria-labelledby="solar-title">
-        <img className="solar-backdrop" src={solarStormBg} alt="Maggie y su gato observan la base lunar y la tormenta solar desde el interior de la estación." />
+      <section className="solar-stage" aria-labelledby="quest-title">
+        <img className="solar-backdrop" src={art.bg} alt={art.alt} />
         <div className="solar-stage-content">
           <div className="solar-story rounded-2xl p-4 sm:p-5">
             <p className="solar-alert inline-flex items-center justify-center gap-2 rounded-full px-3 py-1 text-xs font-bold sm:text-sm"><TriangleAlert className="size-4 shrink-0" />{m.alert}</p>
-            <h2 id="solar-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
+            {m.id !== 4 && <p className="mt-2 text-sm font-bold text-muted-foreground">{m.sensor}</p>}
+            <h2 id="quest-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
             <p className="mt-2 whitespace-pre-line text-base font-bold leading-relaxed">{m.body}</p>
             <p className="mt-2 text-lg font-bold">¿Qué hacemos?</p>
           </div>
-          <div className="solar-decisions grid gap-4 md:grid-cols-2" aria-label="Decisiones de la tormenta solar">
+          <div className="solar-decisions grid gap-4 md:grid-cols-2" aria-label={`Decisiones: ${m.title}`}>
             {m.choices.map((c, i) => (
               <button key={c.id} onClick={() => onChoose(c)} className={`solar-choice ${i === 0 ? "solar-power" : "solar-shelter"} flex min-w-0 flex-col rounded-2xl p-4 text-left sm:p-5`}>
-                <span className="text-xl font-bold uppercase sm:text-2xl"><span aria-hidden="true">{i === 0 ? "⚡" : "🛡️"}</span> ¡{c.title}!</span>
+                <span className="text-xl font-bold uppercase sm:text-2xl"><span aria-hidden="true">{art.icons[i]}</span> ¡{c.title}!</span>
                 <span className="mb-4 mt-2 flex-1 text-sm font-extrabold">{c.subtitle}</span>
                 <Effects c={c} />
               </button>
