@@ -81,11 +81,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "¡Misión Base Lunar!" },
-      { name: "description", content: "Aventura lunar interactiva de PopTART-Cats" },
+      { title: "¡Pura Vida Lunar!" },
+      { name: "description", content: "¡Pura Vida Lunar!: aventura lunar interactiva costarricense de PopTART-Cats" },
       
-      { property: "og:title", content: "¡Misión Base Lunar!" },
-      { property: "og:description", content: "Aventura lunar interactiva de PopTART-Cats" },
+      { property: "og:title", content: "¡Pura Vida Lunar!" },
+      { property: "og:description", content: "¡Pura Vida Lunar!: aventura lunar interactiva costarricense de PopTART-Cats" },
+      { property: "og:site_name", content: "¡Pura Vida Lunar!" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       

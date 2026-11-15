@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, ChevronLeft, CircleHelp, LockKeyhole, MousePointe
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
 import solarPanelVideo from "@/assets/paneles-solares.mp4";
-import menuArt from "@/assets/menu-cohete-costa-rica.png.asset.json";
+import menuArt from "@/assets/pura-vida-lunar-menu.png";
 import questPanels from "@/assets/quest-01-paneles.png";
 import questGreenhouse from "@/assets/quest-02-invernadero.png";
 import questMeteorites from "@/assets/quest-03-meteoritos.png";
@@ -100,9 +100,9 @@ function Menu({ onStart }: { onStart: () => void }) {
   const [panel, setPanel] = useState<null | "guide" | "science" | "credits">(null);
   return (
     <main className="lunar-game relative isolate flex min-h-dvh flex-col items-center bg-background sm:justify-center">
-      <h1 className="sr-only">¡Misión Base Lunar!</h1>
+      <h1 className="sr-only">¡Pura Vida Lunar!</h1>
       <div className="menu-art">
-        <img src={menuArt.url} alt="Portada de Misión Base Lunar: un cohete con los colores de Costa Rica despega hacia la Luna desde una colina verde bajo un cielo estrellado." />
+        <img src={menuArt} alt="Portada de ¡Pura Vida Lunar!: un cohete con los colores de Costa Rica despega hacia la Luna desde una colina verde bajo un cielo estrellado." />
         {/* Las zonas interactivas se alinean con los botones dibujados en la imagen (1680×944). */}
         <button onClick={onStart} className="menu-hotspot" style={{ left: "33%", top: "63.5%", width: "33.5%", height: "12.5%" }} aria-label="Comenzar juego" />
         <button onClick={() => setPanel("guide")} className="menu-hotspot" style={{ left: "24.4%", top: "78.3%", width: "15.3%", height: "7.8%" }} aria-label="Abrir la Guía Lunar" />
@@ -314,7 +314,7 @@ function MissionScreen({ index, r, onChoose, onExplore }: { index: number; r: Re
       <header className="solar-header flex flex-col gap-3 rounded-3xl p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-extrabold text-energy">{m.code} • Misión {index + 1} de {MISSIONS.length}</p>
-          <h1 className="text-xl font-bold">¡Misión Base Lunar! — <span className="text-energy">{m.title}</span></h1>
+          <h1 className="text-xl font-bold">¡Pura Vida Lunar! — <span className="text-energy">{m.title}</span></h1>
         </div>
         <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
         <button onClick={onExplore} className="glass rounded-2xl px-4 py-2 font-bold"><ChevronLeft className="inline-block size-5" aria-hidden="true" /> Volver a explorar la base</button>
