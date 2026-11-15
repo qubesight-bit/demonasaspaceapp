@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { ArrowRight, BookOpen, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronLeft, CircleHelp, LockKeyhole, MousePointerClick, Zap, Heart, Home, Lightbulb, Medal, Play, RotateCcw, Rocket, Shield, Sprout, TriangleAlert, TrendingUp, Users, X } from "lucide-react";
 import { MISSIONS, START, applyChoice, failedResource, RESOURCE_LABEL, type Choice, type ResourceKey, type Resources } from "@/lib/game";
 import corridorVideo from "@/assets/prueba-velocidad.mp4";
 import solarPanelVideo from "@/assets/paneles-solares.mp4";
@@ -52,7 +52,7 @@ function Footer() {
 function ResourceBar({ k, value, delta }: { k: ResourceKey; value: number; delta?: number | undefined }) {
   const Icon = ICON[k];
   return (
-    <div className="glass min-w-0 rounded-2xl px-2 py-2 sm:px-4">
+    <div className="resource-bar glass min-w-0 rounded-2xl px-2 py-2 sm:px-4">
       <div className="flex items-center justify-center gap-1 text-xs font-extrabold sm:text-sm">
         <Icon className={`size-4 shrink-0 ${TEXT[k]}`} />
         <span>{RESOURCE_LABEL[k]}</span>
@@ -70,7 +70,7 @@ function ResourceBar({ k, value, delta }: { k: ResourceKey; value: number; delta
 
 function Hud({ r, before, sticky = false }: { r: Resources; before?: Resources; sticky?: boolean }) {
   return (
-    <div className={`grid grid-cols-3 gap-2 ${sticky ? "sticky top-2 z-20 rounded-3xl bg-background/95 p-2 shadow-lg" : ""}`} aria-label="Recursos de la base">
+    <div className={`resource-hud grid grid-cols-3 gap-2 ${sticky ? "sticky top-2 z-20 rounded-3xl bg-background/95 p-2 shadow-lg" : ""}`} aria-label="Recursos de la base">
       {(Object.keys(r) as ResourceKey[]).map((k) => (
         <ResourceBar key={k} k={k} value={r[k]} delta={before ? r[k] - before[k] : undefined} />
       ))}
@@ -138,7 +138,7 @@ function Menu({ onStart }: { onStart: () => void }) {
       {panel && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-scrim p-4" onClick={() => setPanel(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="menu-panel-title" className="glass animate-rise relative max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-3xl bg-popover p-5 sm:p-6" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setPanel(null)} className="absolute right-2 top-2 flex w-12 items-center justify-center rounded-full" aria-label="Cerrar"><X /></button>
+            <button onClick={() => setPanel(null)} className="absolute right-2 top-2 flex min-w-12 items-center justify-center gap-1 rounded-full px-2" aria-label="Cerrar esta ventana"><X className="size-4" aria-hidden="true" /><span>Cerrar</span></button>
             {panel === "guide" ? (
               <>
                 <h2 id="menu-panel-title" className="pr-10 text-2xl font-bold text-primary">¡Aprende a jugar!</h2>
@@ -208,8 +208,14 @@ const subscribeMotion = (notify: () => void) => {
 const motionSnapshot = () => window.matchMedia(MOTION_QUERY).matches;
 const serverMotionSnapshot = () => false;
 
-function ExplorationScreen({ index, r, navigation, onVisit, onBack, onArrive, onMission }: {
+function ExplorationTutorial({ step, onNext, onSkip }: { step: number; onNext: () => void; onSkip: () => void }) {
+  const tips = ["Empezá: elegí el botón verde para abrir tu misión.", "Explorá: elegí un lugar disponible para recorrer la base.", "Decidí: tocá o hacé clic en una opción. Mirá cómo cambian las barras."];
+  return <aside className="exploration-tutorial" aria-label="Guía rápida"><p className="flex items-center gap-2 font-extrabold"><CircleHelp className="size-5" aria-hidden="true" /> Guía rápida: {step + 1} de 3</p><p>{tips[step]}</p><div className="flex flex-wrap gap-2"><button type="button" onClick={onNext} className="exploration-tutorial-next"><MousePointerClick className="size-5" aria-hidden="true" /> {step === 2 ? "¡Ya entendí!" : "Siguiente consejo"}</button><button type="button" onClick={onSkip} className="exploration-tutorial-skip">Omitir guía</button></div></aside>;
+}
+
+function ExplorationScreen({ index, r, navigation, tutorialStep, onTutorialNext, onTutorialSkip, onVisit, onBack, onArrive, onMission }: {
   index: number; r: Resources; navigation: NavigationState;
+  tutorialStep: number | null; onTutorialNext: () => void; onTutorialSkip: () => void;
   onVisit: (target: LocationId) => void; onBack: () => void;
   onArrive: (target: LocationId) => void; onMission: () => void;
 }) {
@@ -242,6 +248,7 @@ function ExplorationScreen({ index, r, navigation, onVisit, onBack, onArrive, on
           </li>
         ))}
       </ol>
+      {tutorialStep !== null && <ExplorationTutorial step={tutorialStep} onNext={onTutorialNext} onSkip={onTutorialSkip} />}
       <div className="exploration-layout">
         <section className="exploration-location" aria-labelledby="location-title">
           <div className="exploration-view" aria-label="Escenario de la base lunar" aria-busy={pending !== null}>
@@ -271,7 +278,7 @@ function ExplorationScreen({ index, r, navigation, onVisit, onBack, onArrive, on
             <p className="font-bold">Tu objetivo: {LOCATIONS[index]!.name}</p>
             {available ? (
               <button onClick={onMission} disabled={pending !== null} className="exploration-mission-button">
-                Iniciar {MISSIONS[index]!.code}: {MISSIONS[index]!.title}
+                <Play className="inline-block size-5" aria-hidden="true" /> Iniciar {MISSIONS[index]!.code}: {MISSIONS[index]!.title}
               </button>
             ) : (
               <p>Ya completaste la misión de esta zona. Viajá a {LOCATIONS[index]!.name} para seguir.</p>
@@ -281,19 +288,23 @@ function ExplorationScreen({ index, r, navigation, onVisit, onBack, onArrive, on
             {location.connections.map(target => {
               const place = LOCATIONS[target];
               const locked = !canVisit(locationId, target, index);
+              const unlockMission = target > 0 ? MISSIONS[target - 1] : undefined;
+              const prerequisite = target > 0 ? LOCATIONS[target - 1] : undefined;
+              const lockHint = `Lugar bloqueado: ${place.name}. Completá la misión ${target} en ${prerequisite?.name ?? "la zona anterior"} para desbloquear este destino. La misión se llama ${unlockMission?.title ?? "la misión anterior"}.`;
               return (
                 <div key={target} className="exploration-destination">
                   <button
                     onClick={() => onVisit(target)}
                     disabled={locked || pending !== null}
+                    aria-label={place.destination}
                     aria-describedby={`destination-${target}-hint`}
                     className="exploration-destination-button"
                   >
-                    <span aria-hidden="true">{place.emoji}</span> {place.destination}
-                    {locked && <span className="exploration-lock">Bloqueado</span>}
+                    <span aria-hidden="true">{place.emoji}</span> <span>{place.name}: {place.destination}</span>
+                    {locked && <span className="exploration-lock"><LockKeyhole className="inline-block size-4" aria-hidden="true" /> Bloqueado</span>}
                   </button>
                   <p id={`destination-${target}-hint`}>
-                    {locked ? `Completá la misión ${target} en ${LOCATIONS[target - 1]!.name} para desbloquear este destino.` : pending ? "Esperá a llegar o saltá la animación." : "Camino disponible. Explorar no consume recursos."}
+                    {locked ? lockHint : pending ? "Esperá a llegar o elegí Saltar animación." : "Camino disponible. Explorar no gasta recursos."}
                   </p>
                 </div>
               );
@@ -322,7 +333,7 @@ function MissionScreen({ index, r, onChoose, onExplore }: { index: number; r: Re
           <h1 className="text-xl font-bold">¡Misión Base Lunar! — <span className="text-energy">{m.title}</span></h1>
         </div>
         <div className="w-full lg:max-w-lg"><Hud r={r} /></div>
-        <button onClick={onExplore} className="glass rounded-2xl px-4 py-2 font-bold">Volver a explorar</button>
+        <button onClick={onExplore} className="glass rounded-2xl px-4 py-2 font-bold"><ChevronLeft className="inline-block size-5" aria-hidden="true" /> Volver a explorar la base</button>
       </header>
       <section className="solar-stage" aria-labelledby="quest-title">
         <img className="solar-backdrop" src={art.bg} alt={art.alt} />
@@ -332,7 +343,7 @@ function MissionScreen({ index, r, onChoose, onExplore }: { index: number; r: Re
             {m.id !== 4 && <p className="mt-2 text-sm font-bold text-muted-foreground">{m.sensor}</p>}
             <h2 id="quest-title" className="text-xl font-bold text-yellow-100 sm:text-2xl">{m.headline}</h2>
             <p className="mt-2 whitespace-pre-line text-base font-bold leading-relaxed">{m.body}</p>
-            <p className="mt-2 text-lg font-bold">¿Qué hacemos?</p>
+            <p className="mt-2 text-lg font-bold">Elegí una opción:</p>
           </div>
           <div className="solar-decisions grid gap-4 md:grid-cols-2" aria-label={`Decisiones: ${m.title}`}>
             {m.choices.map((c, i) => (
@@ -379,9 +390,10 @@ function Report({ index, choice, before, r, onNext }: { index: number; choice: C
         </div>
         <p className="mt-4 flex gap-3 rounded-2xl bg-muted/40 p-4"><Lightbulb className="size-6 shrink-0 text-secondary" /><span><b>¿Sabías que…?</b> {m.fact}</span></p>
       </section>
-      <button onClick={onNext} className="glass-button mx-auto flex w-full max-w-sm items-center justify-center gap-3 rounded-full px-6 py-3 text-lg font-bold">
-        <Play className="size-5 shrink-0" /> Continuar <ArrowRight className="size-5 shrink-0" />
+        <button onClick={onNext} aria-label="Continuar" aria-describedby="continue-hint" className="glass-button mx-auto flex w-full max-w-sm items-center justify-center gap-3 rounded-full px-6 py-3 text-lg font-bold">
+          <Play className="size-5 shrink-0" aria-hidden="true" /> Continuar a la siguiente misión <ArrowRight className="size-5 shrink-0" aria-hidden="true" />
       </button>
+        <span id="continue-hint" className="sr-only">Va a la siguiente misión.</span>
       <Footer />
     </Screen>
   );
@@ -450,6 +462,7 @@ export function Game() {
   const [phase, setPhase] = useState<Phase>({ kind: "menu" });
   const [r, setR] = useState<Resources>(START);
   const [navigation, dispatchNavigation] = useReducer(navigationReducer, INITIAL_NAVIGATION);
+  const [tutorialStep, setTutorialStep] = useState<number | null>(0);
   const reducedMotion = useSyncExternalStore(subscribeMotion, motionSnapshot, serverMotionSnapshot);
   useEffect(() => {
     if (reducedMotion && navigation.pending) {
@@ -459,6 +472,7 @@ export function Game() {
   const start = () => {
     setR(START);
     dispatchNavigation({ type: "reset" });
+    setTutorialStep(0);
     setPhase({ kind: "explore", index: 0 });
   };
 
@@ -467,6 +481,9 @@ export function Game() {
       return <Menu onStart={start} />;
     case "explore":
       return <ExplorationScreen index={phase.index} r={r} navigation={navigation}
+        tutorialStep={phase.index === 0 ? tutorialStep : null}
+        onTutorialNext={() => setTutorialStep(step => step === null || step === 2 ? null : step + 1)}
+        onTutorialSkip={() => setTutorialStep(null)}
         onVisit={target => dispatchNavigation({ type: "visit", target, missionIndex: phase.index, animate: !reducedMotion })}
         onBack={() => dispatchNavigation({ type: "back", missionIndex: phase.index, animate: !reducedMotion })}
         onArrive={target => dispatchNavigation({ type: "arrive", target })}

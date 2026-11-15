@@ -143,6 +143,9 @@
 .lunar-game { overflow-wrap: anywhere; line-height: 1.6; }
 .lunar-game button { min-height: 48px; touch-action: manipulation; }
 .lunar-game button:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
+.resource-hud { min-width: 0; }
+.resource-bar { min-height: 0; }
+.resource-bar .mt-1 { margin-top: .15rem; }
 
 .solar-header {
   background: linear-gradient(180deg, #ffffff35, #103464cf);
@@ -150,24 +153,31 @@
   backdrop-filter: blur(12px);
 }
 .solar-scene { display: flex; flex-direction: column; min-height: 100svh; background: #07152f; }
-.solar-scene .solar-header { position: relative; z-index: 1; margin: .75rem; }
-.solar-stage { position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column; }
+.solar-scene .solar-header { position: relative; z-index: 1; margin: .5rem; }
+.solar-stage { position: relative; isolation: isolate; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .solar-backdrop { position: absolute; inset: 0; z-index: -2; width: 100%; height: auto; }
-.solar-stage::before { content: ""; display: block; aspect-ratio: 1672 / 941; flex-shrink: 0; }
-.solar-stage-content { display: flex; flex-direction: column; gap: 1rem; padding: 1rem; margin-top: -1.5rem; }
+.solar-stage::before { content: ""; display: block; aspect-ratio: 16 / 7; flex-shrink: 0; }
+.solar-stage-content { display: flex; flex-direction: column; gap: .75rem; padding: .75rem; margin-top: -1rem; }
 .solar-story { color: #f2f7ff; background: #06152feb; border: 1px solid #a3eaff99; box-shadow: 0 6px 24px #0008, inset 0 1px 0 #ffffff40; }
-.solar-story h2 { margin-top: .5rem; }
-.solar-scene > p { margin-top: 0; padding: .75rem 1rem; background: #07152f; }
+.solar-story h2 { margin-top: .25rem; }
+.solar-scene > p { margin-top: 0; padding: .4rem .75rem; background: #07152f; }
 .solar-scene * { animation: none !important; transition: none !important; }
-@media (min-width: 1024px) {
-  .solar-scene .solar-header { margin: 1rem; }
-  .solar-stage { min-height: max(42rem, calc(100svh - 11rem)); }
+@media (min-width: 640px) {
+  .solar-scene .solar-header { display: grid; grid-template-columns: minmax(13rem, 1fr) minmax(19rem, 1.25fr) auto; gap: .75rem; margin: .5rem .75rem; padding: .65rem; }
+  .solar-scene .solar-header > .w-full { width: auto; }
+  .solar-stage { min-height: calc(100svh - 7.75rem); }
   .solar-backdrop { height: 100%; object-fit: cover; object-position: 40% center; }
-  .solar-stage::before { aspect-ratio: auto; min-height: 14rem; flex: 1; }
-  .solar-stage::after { content: ""; position: absolute; inset: 45% 0 0; z-index: -1; background: linear-gradient(transparent, #07152fcc); pointer-events: none; }
-  .solar-stage-content { margin-top: 0; padding: 1.5rem; }
-  .solar-story { width: min(100%, 36rem); align-self: flex-end; }
-  .solar-decisions { width: min(100%, 76rem); align-self: center; }
+  .solar-stage::before { display: none; }
+  .solar-stage::after { content: ""; position: absolute; inset: 38% 0 0; z-index: -1; background: linear-gradient(transparent, #07152fcc); pointer-events: none; }
+  .solar-stage-content { display: grid; grid-template-columns: minmax(16rem, .9fr) minmax(27rem, 1.3fr); align-content: end; gap: 1rem; min-height: 100%; margin-top: 0; padding: .75rem 1rem; }
+  .solar-story { align-self: end; }
+  .solar-decisions { align-self: end; }
+  .solar-decisions .solar-choice { min-height: 10.75rem; padding: 1rem; }
+  .solar-story p { margin-top: .4rem; }
+}
+@media (min-width: 1024px) {
+  .solar-scene .solar-header { margin: .6rem 1rem; }
+  .solar-stage-content { grid-template-columns: minmax(19rem, .85fr) minmax(33rem, 1.15fr); padding: 1rem 1.5rem; }
 }
 .solar-alert { background: linear-gradient(90deg, #a64b00, #ad2935, #a64b00); color: white; border: 1px solid #ffe3a0; }
 .solar-choice {
@@ -182,8 +192,8 @@
 .solar-choice:hover { transform: translateY(-2px); }
 .solar-choice:active { transform: translateY(2px); }
 
-.exploration-scene { display: flex; flex-direction: column; gap: 1rem; min-height: 100svh; padding: 1rem; background: #071b34; color: #f3faff; }
-.exploration-header { display: grid; align-items: center; gap: 1rem; }
+.exploration-scene { display: flex; flex-direction: column; gap: .75rem; min-height: 100svh; padding: .75rem; background: #071b34; color: #f3faff; }
+.exploration-header { display: grid; align-items: center; gap: .75rem; }
 .exploration-progress { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin: 0; padding: 0; list-style: none; }
 .exploration-progress li { display: flex; align-items: center; gap: .6rem; padding: .6rem; border: 1px solid #7796af; border-radius: 1rem; background: #132f4b; font-size: .875rem; }
 .exploration-progress li > span:first-child { display: grid; place-items: center; min-width: 1.75rem; min-height: 1.75rem; border-radius: 50%; background: #e1f8ff; color: #09223a; font-weight: 800; }
@@ -194,28 +204,39 @@
 .exploration-view { position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 16 / 9; border: 2px solid #8bd5e9; border-radius: 1.25rem; background: #031020; }
 .exploration-art, .exploration-video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
 .exploration-video { pointer-events: none; }
-.exploration-caption { padding: 1rem 0 0; }
-.exploration-controls { display: flex; flex-direction: column; gap: .75rem; }
-.exploration-status { min-height: 5rem; display: flex; align-items: center; padding: .6rem 1rem; border: 1px solid #8bd5e9; border-radius: 1rem; background: #143b57; font-size: 1.125rem; font-weight: 800; }
-.exploration-mission { display: grid; gap: .5rem; padding: 1rem; border-radius: 1rem; background: #142e48; }
+.exploration-caption { padding: .5rem 0 0; }
+.exploration-caption p { margin-top: .15rem; }
+.exploration-controls { display: flex; flex-direction: column; gap: .5rem; }
+.exploration-tutorial { display: grid; gap: .4rem; padding: .75rem 1rem; border: 2px solid #b8f59c; border-radius: 1rem; background: linear-gradient(135deg, #174c69, #143b57); box-shadow: inset 0 1px 0 #ffffff4d; }
+.exploration-tutorial p { margin: 0; font-weight: 700; }
+.exploration-tutorial-next { background: #c7f6a4 !important; border-color: #efffdd !important; }
+.exploration-tutorial-skip { background: #e5fbff !important; }
+.exploration-status { min-height: 0; display: flex; align-items: center; padding: .55rem .8rem; border: 1px solid #8bd5e9; border-radius: 1rem; background: #143b57; font-size: 1rem; font-weight: 800; }
+.exploration-mission { display: grid; gap: .35rem; padding: .75rem; border-radius: 1rem; background: #142e48; }
 .exploration-scene button { min-width: 44px; min-height: 48px; padding: .75rem 1rem; border: 2px solid #a6ebff; border-radius: 1rem; background: #c9f4ff; color: #08233b; font-size: 1.0625rem; font-weight: 800; line-height: 1.4; text-align: left; }
 .exploration-scene button:hover:enabled { background: #e5fbff; }
 .exploration-scene .exploration-mission-button { background: #c7f6a4; border-color: #efffdd; }
 .exploration-scene button:disabled { background: #243b50; color: #deebf6; border-color: #8399ad; cursor: not-allowed; }
 .exploration-scene button:focus-visible, .exploration-scene h2:focus-visible { outline: 3px solid #ffe899; outline-offset: 4px; }
-.exploration-destinations { display: grid; gap: .75rem; }
+.exploration-destinations { display: grid; gap: .5rem; }
 .exploration-destination-button { width: 100%; }
 .exploration-destination-button > span:first-child { margin-right: .25rem; }
 .exploration-lock { display: block; margin-top: .25rem; font-size: .875rem; }
-.exploration-destination p { min-height: 3.2em; margin-top: .35rem; font-size: .875rem; color: #dfedfa; }
-.exploration-travel-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+.exploration-destination p { min-height: 0; margin: .2rem 0 0; font-size: .875rem; color: #dfedfa; }
+.exploration-travel-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; }
 @media (min-width: 640px) {
   .exploration-header { grid-template-columns: 1fr minmax(20rem, 1fr); }
   .exploration-progress { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .exploration-progress li { padding: .45rem .55rem; }
+  .exploration-tutorial { grid-template-columns: auto 1fr auto; align-items: center; }
+  .exploration-tutorial > div { justify-content: end; }
 }
 @media (min-width: 1024px) {
-  .exploration-scene { padding: 1.5rem; }
+  .exploration-scene { gap: .6rem; padding: 1rem 1.5rem; }
   .exploration-layout { grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr); }
+  .exploration-view { aspect-ratio: 16 / 7; }
+  .exploration-destinations { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .exploration-travel-actions { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lunar-game *, .lunar-game *::before, .lunar-game *::after { animation: none !important; transition: none !important; }
